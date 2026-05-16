@@ -11,6 +11,7 @@ from .face_morph import generate_morph_sequence
 
 logger = logging.getLogger(__name__)
 
+
 def do_morphing(img1, img2, duration, frame_rate, output):
     """Perform face morphing between two images.
 
@@ -21,8 +22,9 @@ def do_morphing(img1, img2, duration, frame_rate, output):
         frame_rate: Number of frames per second.
         output: Path to save the output video.
     """
-    [size, img1, img2, points1, points2, list3] = \
-        generate_face_correspondences(img1, img2)
+    [size, img1, img2, points1, points2, list3] = generate_face_correspondences(
+        img1, img2
+    )
 
     tri = make_delaunay(size[1], size[0], list3)
 
@@ -30,7 +32,7 @@ def do_morphing(img1, img2, duration, frame_rate, output):
         (img1, img2),
         (points1, points2),
         tri,
-        (duration, frame_rate, size, output)
+        (duration, frame_rate, size, output),
     )
 
 
@@ -39,12 +41,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--img1", required=True, help="The First Image")
     parser.add_argument("--img2", required=True, help="The Second Image")
-    parser.add_argument(
-        "--duration", type=int, default=5, help="The duration"
-    )
-    parser.add_argument(
-        "--frame", type=int, default=20, help="The frame Rate"
-    )
+    parser.add_argument("--duration", type=int, default=5, help="The duration")
+    parser.add_argument("--frame", type=int, default=20, help="The frame Rate")
     parser.add_argument("--output", help="Output Video Path")
     args = parser.parse_args()
 
