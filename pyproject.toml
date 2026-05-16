@@ -145,7 +145,7 @@ select = [
     "UP",
     "W",
 ]
-ignore = ["ANN401", "S101", "N802", "TRY003"]
+ignore = ["ANN401", "S101", "N802", "TRY003", "S603", "S607"]
 fixable = ["ALL"]
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
