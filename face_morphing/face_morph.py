@@ -1,4 +1,5 @@
 """Module for performing image warping and morphing between two faces."""
+
 from subprocess import PIPE, Popen
 
 import cv2
@@ -33,6 +34,7 @@ def apply_affine_transform(src, src_rri, dst_tri, size):
         flags=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_REFLECT_101,
     )
+
 
 def _morph_triangle(img1, img2, img, triangles, alpha):
     """Warps and alpha blends triangular regions from img1 and img2 to img.
@@ -83,9 +85,7 @@ def _morph_triangle(img1, img2, img, triangles, alpha):
     )
 
 
-def generate_morph_sequence(
-    img_pair, points_pair, tri_list, video_config
-):
+def generate_morph_sequence(img_pair, points_pair, tri_list, video_config):
     """Generates a face morphing sequence and saves it as a video.
 
     Args:
