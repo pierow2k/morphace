@@ -133,6 +133,7 @@ def generate_face_correspondences(image1, image2):
     list1 = []
     list2 = []
     j = 1
+    size = (img_list[0].shape[0], img_list[0].shape[1])
 
     for img in img_list:
         size = (img.shape[0], img.shape[1])
