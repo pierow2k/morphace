@@ -1,10 +1,14 @@
 """Module for performing image warping and morphing between two faces."""
 
 from subprocess import PIPE, Popen
+from typing import Any, cast
 
 import cv2
 import numpy as np
 from PIL import Image
+
+_CV2 = cast("Any", cv2)
+_NP = cast("Any", np)
 
 
 def apply_affine_transform(src, src_rri, dst_tri, size):
@@ -23,16 +27,18 @@ def apply_affine_transform(src, src_rri, dst_tri, size):
         np.ndarray: The warped image patch.
     """
     # Given a pair of triangles, find the affine transform.
-    warp_mat = cv2.getAffineTransform(np.float32(src_rri), np.float32(dst_tri))
+    warp_mat = _CV2.getAffineTransform(
+        _NP.float32(src_rri), _NP.float32(dst_tri)
+    )
 
     # Return the Affine Transform just found to the src image
-    return cv2.warpAffine(
+    return _CV2.warpAffine(
         src,
         warp_mat,
         (size[0], size[1]),
         None,
-        flags=cv2.INTER_LINEAR,
-        borderMode=cv2.BORDER_REFLECT_101,
+        flags=_CV2.INTER_LINEAR,
+        borderMode=_CV2.BORDER_REFLECT_101,
     )
 
 
@@ -49,9 +55,9 @@ def _morph_triangle(img1, img2, img, triangles, alpha):
     t1, t2, t = triangles
 
     # Find bounding rectangle for each triangle
-    r1 = cv2.boundingRect(np.float32([t1]))
-    r2 = cv2.boundingRect(np.float32([t2]))
-    r = cv2.boundingRect(np.float32([t]))
+    r1 = _CV2.boundingRect(_NP.float32([t1]))
+    r2 = _CV2.boundingRect(_NP.float32([t2]))
+    r = _CV2.boundingRect(_NP.float32([t]))
 
     # Offset points by left top corner of the respective rectangles
     t1_rect = []
@@ -65,7 +71,7 @@ def _morph_triangle(img1, img2, img, triangles, alpha):
 
     # Get mask by filling triangle
     mask = np.zeros((r[3], r[2], 3), dtype=np.float32)
-    cv2.fillConvexPoly(mask, np.int32(t_rect), (1.0, 1.0, 1.0), 16, 0)
+    _CV2.fillConvexPoly(mask, _NP.int32(t_rect), (1.0, 1.0, 1.0), 16, 0)
 
     # Apply warpImage to small rectangular patches
     img1_rect = img1[r1[1] : r1[1] + r1[3], r1[0] : r1[0] + r1[2]]
@@ -124,6 +130,9 @@ def generate_morph_sequence(img_pair, points_pair, tri_list, video_config):
         ],
         stdin=PIPE,
     )
+    if p.stdin is None:
+        raise RuntimeError("Unable to open ffmpeg input stream.")
+    stdin = p.stdin
 
     for j in range(num_images):
         # Convert Mat to float data type
@@ -159,14 +168,14 @@ def generate_morph_sequence(img_pair, points_pair, tri_list, video_config):
             pt2 = (int(t[1][0]), int(t[1][1]))
             pt3 = (int(t[2][0]), int(t[2][1]))
 
-            cv2.line(morphed_frame, pt1, pt2, (255, 255, 255), 1, 8, 0)
-            cv2.line(morphed_frame, pt2, pt3, (255, 255, 255), 1, 8, 0)
-            cv2.line(morphed_frame, pt3, pt1, (255, 255, 255), 1, 8, 0)
+            _CV2.line(morphed_frame, pt1, pt2, (255, 255, 255), 1, 8, 0)
+            _CV2.line(morphed_frame, pt2, pt3, (255, 255, 255), 1, 8, 0)
+            _CV2.line(morphed_frame, pt3, pt1, (255, 255, 255), 1, 8, 0)
 
         res = Image.fromarray(
-            cv2.cvtColor(np.uint8(morphed_frame), cv2.COLOR_BGR2RGB)
+            _CV2.cvtColor(np.uint8(morphed_frame), _CV2.COLOR_BGR2RGB)
         )
-        res.save(p.stdin, "JPEG")
+        res.save(stdin, "JPEG")
 
-    p.stdin.close()
+    stdin.close()
     p.wait()
