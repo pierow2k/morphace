@@ -27,7 +27,10 @@ def do_morphing(img1, img2, duration, frame_rate, output):
     tri = make_delaunay(size[1], size[0], list3)
 
     generate_morph_sequence(
-        duration, frame_rate, img1, img2, points1, points2, tri, size, output
+        (img1, img2),
+        (points1, points2),
+        tri,
+        (duration, frame_rate, size, output)
     )
 
 

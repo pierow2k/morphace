@@ -1,3 +1,4 @@
+"""Module for performing image warping and morphing between two faces."""
 from subprocess import PIPE, Popen
 
 import cv2
@@ -5,28 +6,45 @@ import numpy as np
 from PIL import Image
 
 
-# Apply affine transform calculated using srcTri and dstTri to src and
-# output an image of size.
-def apply_affine_transform(src, srcTri, dstTri, size):
+def apply_affine_transform(src, src_rri, dst_tri, size):
+    """Apply affine transform.
 
+    Apply affine transform calculated using srcTri and dstTri calculated using
+    srcTri and dstTri to src and output an image of size.
+
+    Args:
+        src (np.ndarray): The source image patch.
+        src_rri (list): Triangle coordinates in the source image.
+        dst_tri (list): Triangle coordinates in the destination image.
+        size (tuple): The size (width, height) of the output image.
+
+    Returns:
+        np.ndarray: The warped image patch.
+    """
     # Given a pair of triangles, find the affine transform.
-    warpMat = cv2.getAffineTransform(np.float32(srcTri), np.float32(dstTri))
+    warp_mat = cv2.getAffineTransform(np.float32(src_rri), np.float32(dst_tri))
 
-    # Apply the Affine Transform just found to the src image
-    dst = cv2.warpAffine(
+    # Return the Affine Transform just found to the src image
+    return cv2.warpAffine(
         src,
-        warpMat,
+        warp_mat,
         (size[0], size[1]),
         None,
         flags=cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_REFLECT_101,
     )
 
-    return dst
+def _morph_triangle(img1, img2, img, triangles, alpha):
+    """Warps and alpha blends triangular regions from img1 and img2 to img.
 
-
-# Warps and alpha blends triangular regions from img1 and img2 to img
-def morph_triangle(img1, img2, img, t1, t2, t, alpha):
+    Args:
+        img1 (np.ndarray): The first source image.
+        img2 (np.ndarray): The second source image.
+        img (np.ndarray): The output image to be updated.
+        triangles (tuple): A tuple containing (t1, t2, t) triangle coordinates.
+        alpha (float): Blending factor.
+    """
+    t1, t2, t = triangles
 
     # Find bounding rectangle for each triangle
     r1 = cv2.boundingRect(np.float32([t1]))
@@ -34,40 +52,52 @@ def morph_triangle(img1, img2, img, t1, t2, t, alpha):
     r = cv2.boundingRect(np.float32([t]))
 
     # Offset points by left top corner of the respective rectangles
-    t1Rect = []
-    t2Rect = []
-    tRect = []
+    t1_rect = []
+    t2_rect = []
+    t_rect = []
 
     for i in range(3):
-        tRect.append(((t[i][0] - r[0]), (t[i][1] - r[1])))
-        t1Rect.append(((t1[i][0] - r1[0]), (t1[i][1] - r1[1])))
-        t2Rect.append(((t2[i][0] - r2[0]), (t2[i][1] - r2[1])))
+        t_rect.append(((t[i][0] - r[0]), (t[i][1] - r[1])))
+        t1_rect.append(((t1[i][0] - r1[0]), (t1[i][1] - r1[1])))
+        t2_rect.append(((t2[i][0] - r2[0]), (t2[i][1] - r2[1])))
 
     # Get mask by filling triangle
     mask = np.zeros((r[3], r[2], 3), dtype=np.float32)
-    cv2.fillConvexPoly(mask, np.int32(tRect), (1.0, 1.0, 1.0), 16, 0)
+    cv2.fillConvexPoly(mask, np.int32(t_rect), (1.0, 1.0, 1.0), 16, 0)
 
     # Apply warpImage to small rectangular patches
-    img1Rect = img1[r1[1] : r1[1] + r1[3], r1[0] : r1[0] + r1[2]]
-    img2Rect = img2[r2[1] : r2[1] + r2[3], r2[0] : r2[0] + r2[2]]
+    img1_rect = img1[r1[1] : r1[1] + r1[3], r1[0] : r1[0] + r1[2]]
+    img2_rect = img2[r2[1] : r2[1] + r2[3], r2[0] : r2[0] + r2[2]]
 
     size = (r[2], r[3])
-    warpImage1 = apply_affine_transform(img1Rect, t1Rect, tRect, size)
-    warpImage2 = apply_affine_transform(img2Rect, t2Rect, tRect, size)
+    warp_image1 = apply_affine_transform(img1_rect, t1_rect, t_rect, size)
+    warp_image2 = apply_affine_transform(img2_rect, t2_rect, t_rect, size)
 
     # Alpha blend rectangular patches
-    imgRect = (1.0 - alpha) * warpImage1 + alpha * warpImage2
+    img_rect = (1.0 - alpha) * warp_image1 + alpha * warp_image2
 
     # Copy triangular region of the rectangular patch to the output image
     img[r[1] : r[1] + r[3], r[0] : r[0] + r[2]] = (
         img[r[1] : r[1] + r[3], r[0] : r[0] + r[2]] * (1 - mask)
-        + imgRect * mask
+        + img_rect * mask
     )
 
 
 def generate_morph_sequence(
-    duration, frame_rate, img1, img2, points1, points2, tri_list, size, output
+    img_pair, points_pair, tri_list, video_config
 ):
+    """Generates a face morphing sequence and saves it as a video.
+
+    Args:
+        img_pair (tuple): A tuple containing (img1, img2) images.
+        points_pair (tuple): A tuple containing (points1, points2) landmarks.
+        tri_list (list): A list of triangle vertex indices.
+        video_config (tuple): Video parameters (duration, frame_rate, size,
+        output).
+    """
+    img1, img2 = img_pair
+    points1, points2 = points_pair
+    duration, frame_rate, size, output = video_config
 
     num_images = int(duration * frame_rate)
     p = Popen(
@@ -123,7 +153,7 @@ def generate_morph_sequence(
             t = [points[x], points[y], points[z]]
 
             # Morph one triangle at a time.
-            morph_triangle(img1, img2, morphed_frame, t1, t2, t, alpha)
+            _morph_triangle(img1, img2, morphed_frame, (t1, t2, t), alpha)
 
             pt1 = (int(t[0][0]), int(t[0][1]))
             pt2 = (int(t[1][0]), int(t[1][1]))
