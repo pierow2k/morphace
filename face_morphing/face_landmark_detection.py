@@ -1,3 +1,5 @@
+"""Module for detecting facial landmarks and aligning images for morphing."""
+
 import logging
 
 import cv2
@@ -7,11 +9,20 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class NoFaceFound(Exception):
-    """Raised when there is no face found"""
+class NoFaceFoundError(Exception):
+    """Raised when there is no face found."""
 
 
 def calculate_margin_help(img1, img2):
+    """Calculates dimensions and offsets required to align two images.
+
+    Args:
+        img1 (np.ndarray): The first input image.
+        img2 (np.ndarray): The second input image.
+
+    Returns:
+        list: A list containing [size1, size2, diff0, diff1, avg0, avg1].
+    """
     size1 = img1.shape
     size2 = img2.shape
     diff0 = abs(size1[0] - size2[0]) // 2
@@ -23,6 +34,15 @@ def calculate_margin_help(img1, img2):
 
 
 def crop_image(img1, img2):
+    """Resizes and crops two images so they have matching dimensions.
+
+    Args:
+        img1 (np.ndarray): The first input image.
+        img2 (np.ndarray): The second input image.
+
+    Returns:
+        list: A list containing the two processed images [img1, img2].
+    """
     [size1, size2, diff0, diff1, avg0, avg1] = calculate_margin_help(img1, img2)
 
     if size1[0] == size2[0] and size1[1] == size2[1]:
@@ -61,6 +81,15 @@ def crop_image(img1, img2):
 
 
 def crop_image_help(img1, img2):
+    """Helper function to perform cropping of images based on margins.
+
+    Args:
+        img1 (np.ndarray): The first input image.
+        img2 (np.ndarray): The second input image.
+
+    Returns:
+        list: A list containing the two cropped images.
+    """
     [size1, size2, diff0, diff1, avg0, avg1] = calculate_margin_help(img1, img2)
 
     if size1[0] == size2[0] and size1[1] == size2[1]:
@@ -78,7 +107,21 @@ def crop_image_help(img1, img2):
     return [img1[:, diff1:avg1], img2[diff0:avg0, :]]
 
 
-def generate_face_correspondences(theImage1, theImage2):
+def generate_face_correspondences(image1, image2):
+    """Detects facial landmarks and creates correspondence between images.
+
+    Args:
+        image1 (np.ndarray): The first input image.
+        image2 (np.ndarray): The second input image.
+
+    Raises:
+        NoFaceFoundError: If dlib fails to detect a face in either image.
+
+    Returns:
+        list: A list containing [size, img1, img2, points1, points2, narray]
+            where narray contains the average coordinates of the landmarks
+            for both images.
+    """
     # Detect the points of face.
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(
@@ -86,54 +129,43 @@ def generate_face_correspondences(theImage1, theImage2):
     )
     corresp = np.zeros((68, 2))
 
-    imgList = crop_image(theImage1, theImage2)
+    img_list = crop_image(image1, image2)
     list1 = []
     list2 = []
     j = 1
 
-    for img in imgList:
+    for img in img_list:
         size = (img.shape[0], img.shape[1])
-        if j == 1:
-            currList = list1
-        else:
-            currList = list2
-
-        # Ask the detector to find the bounding boxes of each face. The 1 in the
-        # second argument indicates that we should upsample the image 1 time. This
-        # will make everything bigger and allow us to detect more faces.
+        curr_list = list1 if j == 1 else list2
 
         dets = detector(img, 1)
 
-        try:
-            if len(dets) == 0:
-                raise NoFaceFound
-        except NoFaceFound:
-            logger.error("Sorry, but I couldn't find a face in the image.")
+        if len(dets) == 0:
+            logger.error("Unable to find a face in the image.")
+            raise NoFaceFoundError("Unable to find a face in the image.")
 
         j = j + 1
 
-        for k, rect in enumerate(dets):
+        for _k, rect in enumerate(dets):
             # Get the landmarks/parts for the face in rect.
             shape = predictor(img, rect)
-            # corresp = face_utils.shape_to_np(shape)
 
             for i in range(68):
                 x = shape.part(i).x
                 y = shape.part(i).y
-                currList.append((x, y))
+                curr_list.append((x, y))
                 corresp[i][0] += x
                 corresp[i][1] += y
-                # cv2.circle(img, (x, y), 2, (0, 255, 0), 2)
 
             # Add back the background
-            currList.append((1, 1))
-            currList.append((size[1] - 1, 1))
-            currList.append(((size[1] - 1) // 2, 1))
-            currList.append((1, size[0] - 1))
-            currList.append((1, (size[0] - 1) // 2))
-            currList.append(((size[1] - 1) // 2, size[0] - 1))
-            currList.append((size[1] - 1, size[0] - 1))
-            currList.append(((size[1] - 1), (size[0] - 1) // 2))
+            curr_list.append((1, 1))
+            curr_list.append((size[1] - 1, 1))
+            curr_list.append(((size[1] - 1) // 2, 1))
+            curr_list.append((1, size[0] - 1))
+            curr_list.append((1, (size[0] - 1) // 2))
+            curr_list.append(((size[1] - 1) // 2, size[0] - 1))
+            curr_list.append((size[1] - 1, size[0] - 1))
+            curr_list.append(((size[1] - 1), (size[0] - 1) // 2))
 
     # Add back the background
     narray = corresp / 2
@@ -146,4 +178,4 @@ def generate_face_correspondences(theImage1, theImage2):
     narray = np.append(narray, [[size[1] - 1, size[0] - 1]], axis=0)
     narray = np.append(narray, [[(size[1] - 1), (size[0] - 1) // 2]], axis=0)
 
-    return [size, imgList[0], imgList[1], list1, list2, narray]
+    return [size, img_list[0], img_list[1], list1, list2, narray]
