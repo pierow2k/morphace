@@ -1,0 +1,30 @@
+# https://editorconfig.org/
+# Revised 2026-04-28
+
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Tab-indented formats (Exceptions to global space rule)
+[{Makefile,go.mod,go.sum,*.go,.gitmodules}]
+indent_style = tab
+indent_size = 4        # Preferred width for viewing
+tab_width = 4          # Most tools assume 8 for Go, but 4 is acceptable if team agrees
+
+[*.sh]
+indent_size = 4        # Google prefers 2, but 4 is widely idiomatic
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.py]
+indent_size = 4
+# trim_trailing_whitespace = true (Inherited from global)
+
+[*.toml]
+indent_size = 2        # Community standard is often 2

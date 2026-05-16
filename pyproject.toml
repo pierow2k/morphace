@@ -1,0 +1,326 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "face-morphing"
+version = "0.0.1"
+description = "Create a morphing sequence betwen two faces"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "dlib==20.0.1",
+  "ffmpeg==1.4",
+  "ffmpeg-python==0.2.0",
+  "imutils==0.5.4",
+  "opencv-python==4.13.0.92",
+  "pip==26.1.1",
+  "pyparsing==3.3.2",
+  "scikit-image==0.26.0",
+  "setuptools==82.0.1",
+  "wheel==0.47.0",
+]
+
+[project.scripts]
+face-morphing = "face_morphing:main"
+
+[dependency-groups]
+dev = [
+  "pipdeptree==2.35.2",
+  "pylint==4.0.5",
+  "pyright==1.1.409",
+  "pytest==9.0.3",
+  "pytest-cov==7.1.0",
+  "ruff==0.15.13",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["face_morphing"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "face_morphing",
+  "README.md",
+  "pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+  "--cov=face_morphing",
+  "--cov-branch",
+  "--cov-report=term-missing:skip-covered",
+  "--cov-report=html",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["face_morphing"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+skip_empty = true
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+  "raise AssertionError",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.ruff]
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+]
+line-length = 80
+indent-width = 4
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "A",
+    # "ANN",
+	"ARG",
+    "B",
+    "C4",
+    "D",
+    "E",
+    # "ERA",
+    "F",
+    "FA",
+    "FIX",
+    "FURB",
+    "G",
+	"I",
+    "ICN",
+    "INT",
+	"INP",
+    "ISC",
+    "LOG",
+    "PIE",
+	"PT",
+	"PTH",
+	"PYI",
+	"Q",
+	"S",
+    "N",
+    "PERF",
+    "PL",
+	"RET",
+    "RSE",
+	"RUF",
+    "SIM",
+	"SLOT",
+	"T20",
+	"TC",
+	"TRY",
+    "UP",
+    "W",
+]
+ignore = ["ANN401", "S101", "N802", "TRY003"]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.pyright]
+include = [
+  "face_morphing",
+  "tests",
+]
+typeCheckingMode = "standard"
+pythonVersion = "3.13"
+reportMissingTypeStubs = false
+
+[tool.pylint.main]
+py-version = "3.13"
+ignore = ["third_party"]
+persistent = false
+jobs = 4
+unsafe-load-any-extension = false
+load-plugins = []
+
+[tool.pylint.messages_control]
+disable = [
+  "R",
+  "abstract-method",
+  "arguments-differ",
+  "attribute-defined-outside-init",
+  "c-extension-no-member",
+  "consider-using-enumerate",
+  "fixme",
+  "global-statement",
+  "implicit-str-concat",
+  "import-error",
+  "locally-disabled",
+  "missing-function-docstring",
+  "no-init",
+  "no-member",
+  "no-name-in-module",
+  "suppressed-message",
+  "unnecessary-pass",
+  "useless-else-on-loop",
+  "useless-suppression",
+  "wrong-import-order",
+]
+
+[tool.pylint.reports]
+output-format = "text"
+reports = false
+evaluation = "10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)"
+
+[tool.pylint.basic]
+good-names = ["main", "_"]
+bad-names = []
+name-group = []
+include-naming-hint = false
+property-classes = [
+  "abc.abstractproperty",
+  "cached_property.cached_property",
+  "cached_property.threaded_cached_property",
+  "cached_property.cached_property_with_ttl",
+  "cached_property.threaded_cached_property_with_ttl",
+]
+function-rgx = "^(?:(?P<exempt>setUp|tearDown|setUpModule|tearDownModule)|(?P<camel_case>_?[A-Z][a-zA-Z0-9]*)|(?P<snake_case>_?[a-z][a-z0-9_]*))$"
+variable-rgx = "^[a-z][a-z0-9_]*$"
+const-rgx = "^(_?[A-Z][A-Z0-9_]*|__[a-z0-9_]+__|_?[a-z][a-z0-9_]*)$"
+attr-rgx = "^_{0,2}[a-z][a-z0-9_]*$"
+argument-rgx = "^[a-z][a-z0-9_]*$"
+class-attribute-rgx = "^(_?[A-Z][A-Z0-9_]*|__[a-z0-9_]+__|_?[a-z][a-z0-9_]*)$"
+inlinevar-rgx = "^[a-z][a-z0-9_]*$"
+class-rgx = "^_?[A-Z][a-zA-Z0-9]*$"
+module-rgx = "^(_?[a-z][a-z0-9_]*|__init__)$"
+method-rgx = '''(?x)^(?:(?P<exempt>_[a-z0-9_]+__|runTest|setUp|tearDown|setUpTestCase|tearDownTestCase|setupSelf|tearDownClass|setUpClass|(test|assert)_*[A-Z0-9][a-zA-Z0-9_]*|next)|(?P<camel_case>_{0,2}[A-Z][a-zA-Z0-9_]*)|(?P<snake_case>_{0,2}[a-z][a-z0-9_]*))$'''
+no-docstring-rgx = "(__.*__|main|test.*|.*test|.*Test)$"
+docstring-min-length = 12
+
+[tool.pylint.typecheck]
+contextmanager-decorators = [
+  "contextlib.contextmanager",
+  "contextlib2.contextmanager",
+]
+ignored-modules = []
+ignored-classes = [
+  "optparse.Values",
+  "thread._local",
+  "_thread._local",
+]
+generated-members = []
+
+[tool.pylint.format]
+max-line-length = 80
+ignore-long-lines = '''(?x)(
+  ^\s*(\#\ )?<?https?://\S+>?$|
+  ^\s*(from\s+\S+\s+)?import\s+.+$)'''
+single-line-if-stmt = true
+max-module-lines = 99999
+indent-string = "    "
+indent-after-paren = 4
+expected-line-ending-format = ""
+
+[tool.pylint.miscellaneous]
+notes = ["TODO"]
+
+[tool.pylint.string]
+check-quote-consistency = true
+
+[tool.pylint.variables]
+init-import = false
+dummy-variables-rgx = "^\\*{0,2}(_$|unused_|dummy_)"
+additional-builtins = []
+callbacks = [
+  "cb_",
+  "_cb",
+]
+redefining-builtins-modules = [
+  "six",
+  "six.moves",
+  "past.builtins",
+  "future.builtins",
+  "functools",
+]
+
+[tool.pylint.logging]
+logging-modules = [
+  "logging",
+  "absl.logging",
+  "tensorflow.io.logging",
+]
+
+[tool.pylint.similarities]
+min-similarity-lines = 4
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = false
+
+[tool.pylint.imports]
+deprecated-modules = [
+  "regsub",
+  "TERMIOS",
+  "Bastion",
+  "rexec",
+  "sets",
+]
+known-standard-library = []
+known-third-party = [
+  "enchant",
+  "absl",
+]
+analyse-fallback-blocks = false
+
+[tool.pylint.classes]
+defining-attr-methods = [
+  "__init__",
+  "__new__",
+  "setUp",
+]
+exclude-protected = [
+  "_asdict",
+  "_fields",
+  "_replace",
+  "_source",
+  "_make",
+]
+valid-classmethod-first-arg = [
+  "cls",
+  "class_",
+]
+valid-metaclass-classmethod-first-arg = ["mcs"]
