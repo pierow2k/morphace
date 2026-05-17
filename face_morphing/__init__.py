@@ -2,6 +2,7 @@
 
 import logging
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 import dlib
@@ -12,6 +13,29 @@ from .face_landmark_detection import align_faces
 from .face_morph import generate_morph_sequence
 
 logger = logging.getLogger(__name__)
+
+
+# Define the path relative to this file
+_MODEL_PATH = (
+    Path(__file__).parent / "utils" / "shape_predictor_68_face_landmarks.dat"
+)
+
+
+@lru_cache(maxsize=1)
+def _get_detector() -> dlib.frontal_face_detector:
+    """Lazy-loads the dlib face detector."""
+    return dlib.get_frontal_face_detector()
+
+
+@lru_cache(maxsize=1)
+def _get_predictor() -> dlib.shape_predictor:
+    """Lazy-loads the dlib shape predictor."""
+    if not _MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"Dlib model file not found at: {_MODEL_PATH}\n"
+            "Please ensure the model file is included in the package."
+        )
+    return dlib.shape_predictor(str(_MODEL_PATH))
 
 
 @dataclass
@@ -29,37 +53,12 @@ class MorphConfig:
     output: str
 
 
-# Load models once at module level.
-try:
-    # Robust path handling relative to this file
-    _MODEL_PATH = (
-        Path(__file__).parent
-        / "utils"
-        / "shape_predictor_68_face_landmarks.dat"
-    )
-    if not _MODEL_PATH.exists():
-        # Fallback if running from different directory structure
-        _MODEL_PATH = (
-            Path("face_morphing")
-            / "utils"
-            / "shape_predictor_68_face_landmarks.dat"
-        )
-
-    _DETECTOR = dlib.get_frontal_face_detector()
-    _PREDICTOR = dlib.shape_predictor(str(_MODEL_PATH))
-except RuntimeError as e:
-    logger = logging.getLogger(__name__)
-    logger.warning("Could not load dlib models: %s", e)
-    _DETECTOR = None
-    _PREDICTOR = None
-
-
-def do_morphing(
+def morph_faces(
     img1: ImageArray,
     img2: ImageArray,
     config: MorphConfig,
     show_triangles: bool = False,
-) -> None:
+) -> Path:
     """Perform face morphing between two images.
 
     Args:
@@ -67,14 +66,24 @@ def do_morphing(
         img2: The second input image.
         config: Configuration for the morph output.
         show_triangles: Whether to show triangulation lines.
+
+    Returns:
+        The path to the generated video file.
+
+    Raises:
+        RuntimeError: If dlib models are not loaded.
+        NoFaceFoundError: If a face cannot be detected in input images.
     """
+    detector = _get_detector()
+    predictor = _get_predictor()
+
     # Detect facial landmarks and create correspondence between images.
-    size, img1, img2, points1, points2, list3 = align_faces(
-        img1, img2, _DETECTOR, _PREDICTOR
+    size, img1, img2, points1, points2, avg_landmarks = align_faces(
+        img1, img2, detector, predictor
     )
 
-    # Create a Delaunay triangulation from a provided list of points.
-    tri = compute_delaunay_triangles(size[1], size[0], list3)
+    # Create a Delaunay triangulation from average landmark points.
+    tri = compute_delaunay_triangles(size[1], size[0], avg_landmarks)
 
     # Generate a face morphing sequence and save it as a video.
     generate_morph_sequence(
@@ -85,6 +94,8 @@ def do_morphing(
         show_triangles,
     )
 
+    return Path(config.output)
+
 
 # Expose the public API .
-__all__ = ["MorphConfig", "do_morphing"]
+__all__ = ["MorphConfig", "morph_faces"]

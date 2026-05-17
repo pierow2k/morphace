@@ -5,7 +5,7 @@ import logging
 
 import cv2
 
-from . import MorphConfig, do_morphing
+from . import MorphConfig, morph_faces
 
 logger = logging.getLogger(__name__)
 
@@ -42,4 +42,4 @@ def main() -> None:
         output=args.output,
     )
 
-    do_morphing(image1, image2, config, args.show_triangles)
+    morph_faces(image1, image2, config, args.show_triangles)
