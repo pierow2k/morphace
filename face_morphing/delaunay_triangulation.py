@@ -6,13 +6,13 @@ from ._typing import Point, PointArray, Rect, TriangleList
 
 
 # Check if a point is inside a rectangle
-def rect_contains(rect: Rect, point: Point) -> bool:
+def _rect_contains(rect: Rect, point: Point) -> bool:
     """Check if a point is inside a rectangle using chained comparisons."""
     return rect[0] <= point[0] <= rect[2] and rect[1] <= point[1] <= rect[3]
 
 
 # Write the delaunay triangles into a file
-def draw_delaunay(
+def _draw_delaunay(
     f_w: int,
     f_h: int,
     subdiv: cv2.Subdiv2D,
@@ -40,9 +40,9 @@ def draw_delaunay(
         pt3 = (int(t[4]), int(t[5]))
 
         if (
-            rect_contains(r, pt1)
-            and rect_contains(r, pt2)
-            and rect_contains(r, pt3)
+            _rect_contains(r, pt1)
+            and _rect_contains(r, pt2)
+            and _rect_contains(r, pt3)
         ):
             list4.append((dictionary1[pt1], dictionary1[pt2], dictionary1[pt3]))
 
@@ -76,4 +76,4 @@ def make_delaunay(f_w: int, f_h: int, the_list: PointArray) -> TriangleList:
         subdiv.insert(p)
 
     # Make and return delaunay triangulation list.
-    return draw_delaunay(f_w, f_h, subdiv, dictionary)
+    return _draw_delaunay(f_w, f_h, subdiv, dictionary)
