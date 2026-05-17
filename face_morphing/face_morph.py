@@ -159,21 +159,30 @@ def generate_morph_sequence(
     video_config: tuple[int, int, Size, str],
     show_triangles: bool,
 ) -> None:
-    """Generates a face morphing sequence and saves it as a video.
-
-    Args:
-        img_pair: Source images in morph order.
-        points_pair: Landmark points for each source image.
-        tri_list: Triangle vertex indices.
-        video_config: Video parameters in duration, frame rate, size, and
-            output path order.
-        show_triangles: Whether to show triangulation lines.
-    """
+    """Generates a face morphing sequence and saves it as a video."""
     img1, img2 = img_pair
     points1, points2 = points_pair
     duration, frame_rate, size, output = video_config
 
+    # Optimization: Convert images to float32 once, outside the loop
+    img1_float = _NP.float32(img1)
+    img2_float = _NP.float32(img2)
+
+    # Optimization: Convert points to NumPy arrays for vectorization
+    # Assuming points are lists of (x, y) tuples
+    p1_arr = _NP.array(points1, dtype=_NP.float32)
+    p2_arr = _NP.array(points2, dtype=_NP.float32)
+
     num_images = int(duration * frame_rate)
+
+    # Handle edge case where num_images is 1 (avoid division by zero)
+    num_images = max(num_images, 1)
+
+    # Fix: Ensure FFmpeg size string is Width x Height
+    # Docstring says size is (width, height)
+    width, height = size
+    size_str = f"{width}x{height}"
+
     p = Popen(
         [
             "ffmpeg",
@@ -183,7 +192,7 @@ def generate_morph_sequence(
             "-r",
             str(frame_rate),
             "-s",
-            str(size[1]) + "x" + str(size[0]),
+            size_str,  # Corrected order
             "-i",
             "-",
             "-c:v",
@@ -198,64 +207,71 @@ def generate_morph_sequence(
         ],
         stdin=PIPE,
     )
+
     if p.stdin is None:
         raise RuntimeError("Unable to open ffmpeg input stream.")
     stdin = p.stdin
 
-    for j in range(num_images):
-        # Convert Mat to float data type
-        img1 = cast("ImageArray", _NP.float32(img1))
-        img2 = cast("ImageArray", _NP.float32(img2))
+    try:
+        for j in range(num_images):
+            alpha = j / max(1, num_images - 1)
 
-        # Read array of corresponding points
-        points: list[FloatPoint] = []
-        alpha = j / (num_images - 1)
+            # Optimization: Vectorized calculation of intermediate points
+            points_arr = (1 - alpha) * p1_arr + alpha * p2_arr
+            # Convert back to list of tuples to match expected type in
+            # helper functions
+            points: list[FloatPoint] = [tuple(p) for p in points_arr]
 
-        # Compute weighted average point coordinates
-        for i in range(len(points1)):
-            x = (1 - alpha) * points1[i][0] + alpha * points2[i][0]
-            y = (1 - alpha) * points1[i][1] + alpha * points2[i][1]
-            points.append((x, y))
+            # Allocate space for final output
+            morphed_frame = _NP.zeros(img1_float.shape, dtype=_NP.float32)
 
-        # Allocate space for final output
-        morphed_frame = np.zeros(img1.shape, dtype=img1.dtype)
+            for i in range(len(tri_list)):
+                x, y, z = map(int, tri_list[i])
 
-        for i in range(len(tri_list)):
-            x = int(tri_list[i][0])
-            y = int(tri_list[i][1])
-            z = int(tri_list[i][2])
+                t1 = [
+                    _as_float_point(points1[x]),
+                    _as_float_point(points1[y]),
+                    _as_float_point(points1[z]),
+                ]
+                t2 = [
+                    _as_float_point(points2[x]),
+                    _as_float_point(points2[y]),
+                    _as_float_point(points2[z]),
+                ]
+                t = [points[x], points[y], points[z]]
 
-            t1 = [
-                _as_float_point(points1[x]),
-                _as_float_point(points1[y]),
-                _as_float_point(points1[z]),
-            ]
-            t2 = [
-                _as_float_point(points2[x]),
-                _as_float_point(points2[y]),
-                _as_float_point(points2[z]),
-            ]
-            t = [points[x], points[y], points[z]]
+                _morph_triangle(
+                    img1_float, img2_float, morphed_frame, (t1, t2, t), alpha
+                )
 
-            # Morph one triangle at a time.
-            _morph_triangle(img1, img2, morphed_frame, (t1, t2, t), alpha)
+                if show_triangles:
+                    # Optimization: Use polylines for drawing triangles
+                    pts = _NP.array(
+                        [t[0], t[1], t[2]], dtype=_NP.int32
+                    ).reshape((-1, 1, 2))
+                    _CV2.polylines(
+                        morphed_frame, [pts], True, (255, 255, 255), 1
+                    )
 
-            if not show_triangles:
-                continue
+            # Safety: Clip values before casting to uint8 to prevent overflow
+            morphed_frame = _NP.clip(morphed_frame, 0, 255)
 
-            # Draw triangle contours
-            pt1 = (int(t[0][0]), int(t[0][1]))
-            pt2 = (int(t[1][0]), int(t[1][1]))
-            pt3 = (int(t[2][0]), int(t[2][1]))
+            # Convert BGR (OpenCV) to RGB (PIL)
+            res = Image.fromarray(
+                _CV2.cvtColor(_NP.uint8(morphed_frame), _CV2.COLOR_BGR2RGB)
+            )
+            res.save(stdin, "JPEG")
 
-            _CV2.line(morphed_frame, pt1, pt2, (255, 255, 255), 1, 8, 0)
-            _CV2.line(morphed_frame, pt2, pt3, (255, 255, 255), 1, 8, 0)
-            _CV2.line(morphed_frame, pt3, pt1, (255, 255, 255), 1, 8, 0)
+    except BrokenPipeError:
+        # Handle case where FFmpeg closes early
+        raise RuntimeError("FFmpeg process ended unexpectedly.") from None
+    finally:
+        stdin.close()
+        p.wait()
 
-        res = Image.fromarray(
-            _CV2.cvtColor(np.uint8(morphed_frame), _CV2.COLOR_BGR2RGB)
+    # Robustness: Check if FFmpeg succeeded
+    if p.returncode != 0:
+        raise RuntimeError(
+            f"FFmpeg failed with return code {p.returncode}. "
+            "Video may be corrupt."
         )
-        res.save(stdin, "JPEG")
-
-    stdin.close()
-    p.wait()
