@@ -10,15 +10,9 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
   "dlib==20.0.1",
-  "ffmpeg==1.4",
-  "ffmpeg-python==0.2.0",
-  "imutils==0.5.4",
+  "numpy==2.4.5",
   "opencv-python==4.13.0.92",
-  "pip==26.1.1",
-  "pyparsing==3.3.2",
-  "scikit-image==0.26.0",
-  "setuptools==82.0.1",
-  "wheel==0.47.0",
+  "pillow==12.2.0",
 ]
 
 [project.scripts]
@@ -32,6 +26,10 @@ dev = [
   "pytest==9.0.3",
   "pytest-cov==7.1.0",
   "ruff==0.15.13",
+  # utils/combinegif.py
+  "ImageIO==2.37.3",
+  # utils/face_alignment.py
+  "scipy==1.17.1",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -145,7 +143,7 @@ select = [
   "UP",
   "W",
 ]
-ignore = ["ANN401", "S101", "N802", "TRY003", "S603", "S607"]
+ignore = ["ANN401", "S101", "TRY003", "S603", "S607"]
 fixable = ["ALL"]
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
