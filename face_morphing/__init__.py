@@ -15,29 +15,6 @@ from .face_morph import generate_morph_sequence
 logger = logging.getLogger(__name__)
 
 
-# Define the path relative to this file
-_MODEL_PATH = (
-    Path(__file__).parent / "models" / "shape_predictor_68_face_landmarks.dat"
-)
-
-
-@lru_cache(maxsize=1)
-def _get_detector() -> Any:
-    """Lazy-loads the dlib face detector."""
-    return dlib.get_frontal_face_detector()
-
-
-@lru_cache(maxsize=1)
-def _get_predictor() -> dlib.shape_predictor:
-    """Lazy-loads the dlib shape predictor."""
-    if not _MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"Dlib model file not found at: {_MODEL_PATH}\n"
-            "Please ensure the model file is included in the package."
-        )
-    return dlib.shape_predictor(str(_MODEL_PATH))
-
-
 @dataclass
 class MorphConfig:
     """Configuration for morph video output.
@@ -51,6 +28,34 @@ class MorphConfig:
     duration: int
     frame_rate: int
     output: str
+    landmark_model_path: Path
+
+
+@lru_cache(maxsize=1)
+def _get_detector() -> Any:
+    """Lazy-loads the dlib face detector."""
+    return dlib.get_frontal_face_detector()
+
+
+def _get_predictor(landmark_model_path: Path) -> dlib.shape_predictor:
+    """Lazy-load the dlib shape predictor."""
+    model_path = landmark_model_path.expanduser().resolve()
+    return _load_predictor(str(model_path))
+
+
+@lru_cache(maxsize=1)
+def _load_predictor(model_path: str) -> dlib.shape_predictor:
+    """Load and cache the dlib shape predictor."""
+    path = Path(model_path)
+
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Dlib model file not found at: {path}\n"
+            "Pass --landmark-model, set FACE_MORPHING_LANDMARK_MODEL, "
+            "or place the model file in the expected location."
+        )
+
+    return dlib.shape_predictor(str(path))
 
 
 def morph_faces(
@@ -75,7 +80,7 @@ def morph_faces(
         NoFaceFoundError: If a face cannot be detected in input images.
     """
     detector = _get_detector()
-    predictor = _get_predictor()
+    predictor = _get_predictor(config.landmark_model_path)
 
     # Detect facial landmarks and create correspondence between images.
     size, img1, img2, points1, points2, avg_landmarks = align_faces(
