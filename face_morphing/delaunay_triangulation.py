@@ -2,15 +2,22 @@
 
 import cv2
 
+from ._typing import Point, PointArray, Rect, TriangleList
+
 
 # Check if a point is inside a rectangle
-def rect_contains(rect, point):
+def rect_contains(rect: Rect, point: Point) -> bool:
     """Check if a point is inside a rectangle using chained comparisons."""
     return rect[0] <= point[0] <= rect[2] and rect[1] <= point[1] <= rect[3]
 
 
 # Write the delaunay triangles into a file
-def draw_delaunay(f_w, f_h, subdiv, dictionary1):
+def draw_delaunay(
+    f_w: int,
+    f_h: int,
+    subdiv: cv2.Subdiv2D,
+    dictionary1: dict[Point, int],
+) -> TriangleList:
     """Extracts triangle vertex indices from a Subdiv2D object.
 
     Args:
@@ -23,7 +30,7 @@ def draw_delaunay(f_w, f_h, subdiv, dictionary1):
         list: A list of tuples, each containing three point indices for a
         triangle.
     """
-    list4 = []
+    list4: TriangleList = []
 
     triangle_list = subdiv.getTriangleList()
     r = (0, 0, f_w, f_h)
@@ -40,11 +47,10 @@ def draw_delaunay(f_w, f_h, subdiv, dictionary1):
         ):
             list4.append((dictionary1[pt1], dictionary1[pt2], dictionary1[pt3]))
 
-    dictionary1 = {}
     return list4
 
 
-def make_delaunay(f_w, f_h, the_list):
+def make_delaunay(f_w: int, f_h: int, the_list: PointArray) -> TriangleList:
     """Creates a Delaunay triangulation from a provided list of points.
 
     Args:
@@ -63,7 +69,7 @@ def make_delaunay(f_w, f_h, the_list):
 
     # Make a points list and a searchable dictionary.
     the_list = the_list.tolist()
-    points = [(int(x[0]), int(x[1])) for x in the_list]
+    points: list[Point] = [(int(x[0]), int(x[1])) for x in the_list]
     dictionary = dict(zip(points, range(len(points)), strict=True))
 
     # Insert points into subdiv

@@ -5,6 +5,7 @@ import logging
 
 import cv2
 
+from ._typing import ImageArray
 from .delaunay_triangulation import make_delaunay
 from .face_landmark_detection import generate_face_correspondences
 from .face_morph import generate_morph_sequence
@@ -12,7 +13,13 @@ from .face_morph import generate_morph_sequence
 logger = logging.getLogger(__name__)
 
 
-def do_morphing(img1, img2, duration, frame_rate, output):
+def do_morphing(
+    img1: ImageArray,
+    img2: ImageArray,
+    duration: int,
+    frame_rate: int,
+    output: str,
+) -> None:
     """Perform face morphing between two images.
 
     Args:
@@ -36,7 +43,7 @@ def do_morphing(img1, img2, duration, frame_rate, output):
     )
 
 
-def main():
+def main() -> None:
     """Main entry point for the face-morphing CLI."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--img1", required=True, help="The First Image")

@@ -7,11 +7,28 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from ._typing import (
+    FloatPoint,
+    ImageArray,
+    ImagePair,
+    LandmarkList,
+    Point,
+    Size,
+    TriangleList,
+)
+
 _CV2 = cast("Any", cv2)
 _NP = cast("Any", np)
 
+TrianglePoints = tuple[list[FloatPoint], list[FloatPoint], list[FloatPoint]]
 
-def apply_affine_transform(src, src_rri, dst_tri, size):
+
+def apply_affine_transform(
+    src: ImageArray,
+    src_rri: list[FloatPoint],
+    dst_tri: list[FloatPoint],
+    size: Size,
+) -> ImageArray:
     """Apply affine transform.
 
     Apply affine transform calculated using srcTri and dstTri calculated using
@@ -42,7 +59,13 @@ def apply_affine_transform(src, src_rri, dst_tri, size):
     )
 
 
-def _morph_triangle(img1, img2, img, triangles, alpha):
+def _morph_triangle(
+    img1: ImageArray,
+    img2: ImageArray,
+    img: ImageArray,
+    triangles: TrianglePoints,
+    alpha: float,
+) -> None:
     """Warps and alpha blends triangular regions from img1 and img2 to img.
 
     Args:
@@ -60,9 +83,9 @@ def _morph_triangle(img1, img2, img, triangles, alpha):
     r = _CV2.boundingRect(_NP.float32([t]))
 
     # Offset points by left top corner of the respective rectangles
-    t1_rect = []
-    t2_rect = []
-    t_rect = []
+    t1_rect: list[FloatPoint] = []
+    t2_rect: list[FloatPoint] = []
+    t_rect: list[FloatPoint] = []
 
     for i in range(3):
         t_rect.append(((t[i][0] - r[0]), (t[i][1] - r[1])))
@@ -91,7 +114,12 @@ def _morph_triangle(img1, img2, img, triangles, alpha):
     )
 
 
-def generate_morph_sequence(img_pair, points_pair, tri_list, video_config):
+def generate_morph_sequence(
+    img_pair: ImagePair,
+    points_pair: tuple[LandmarkList, LandmarkList],
+    tri_list: TriangleList,
+    video_config: tuple[int, int, Size, str],
+) -> None:
     """Generates a face morphing sequence and saves it as a video.
 
     Args:
@@ -136,11 +164,11 @@ def generate_morph_sequence(img_pair, points_pair, tri_list, video_config):
 
     for j in range(num_images):
         # Convert Mat to float data type
-        img1 = np.float32(img1)
-        img2 = np.float32(img2)
+        img1 = cast("ImageArray", _NP.float32(img1))
+        img2 = cast("ImageArray", _NP.float32(img2))
 
         # Read array of corresponding points
-        points = []
+        points: list[FloatPoint] = []
         alpha = j / (num_images - 1)
 
         # Compute weighted average point coordinates
@@ -157,8 +185,16 @@ def generate_morph_sequence(img_pair, points_pair, tri_list, video_config):
             y = int(tri_list[i][1])
             z = int(tri_list[i][2])
 
-            t1 = [points1[x], points1[y], points1[z]]
-            t2 = [points2[x], points2[y], points2[z]]
+            t1 = [
+                _as_float_point(points1[x]),
+                _as_float_point(points1[y]),
+                _as_float_point(points1[z]),
+            ]
+            t2 = [
+                _as_float_point(points2[x]),
+                _as_float_point(points2[y]),
+                _as_float_point(points2[z]),
+            ]
             t = [points[x], points[y], points[z]]
 
             # Morph one triangle at a time.
@@ -179,3 +215,7 @@ def generate_morph_sequence(img_pair, points_pair, tri_list, video_config):
 
     stdin.close()
     p.wait()
+
+
+def _as_float_point(point: Point) -> FloatPoint:
+    return (float(point[0]), float(point[1]))
