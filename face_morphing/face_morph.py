@@ -35,13 +35,13 @@ def apply_affine_transform(
     srcTri and dstTri to src and output an image of size.
 
     Args:
-        src (np.ndarray): The source image patch.
-        src_rri (list): Triangle coordinates in the source image.
-        dst_tri (list): Triangle coordinates in the destination image.
-        size (tuple): The size (width, height) of the output image.
+        src: The source image patch.
+        src_rri: Triangle coordinates in the source image.
+        dst_tri: Triangle coordinates in the destination image.
+        size: Output image size in width, height order.
 
     Returns:
-        np.ndarray: The warped image patch.
+        The warped image patch.
     """
     # Given a pair of triangles, find the affine transform.
     warp_mat = _CV2.getAffineTransform(
@@ -69,11 +69,11 @@ def _morph_triangle(
     """Warps and alpha blends triangular regions from img1 and img2 to img.
 
     Args:
-        img1 (np.ndarray): The first source image.
-        img2 (np.ndarray): The second source image.
-        img (np.ndarray): The output image to be updated.
-        triangles (tuple): A tuple containing (t1, t2, t) triangle coordinates.
-        alpha (float): Blending factor.
+        img1: The first source image.
+        img2: The second source image.
+        img: The output image to be updated.
+        triangles: Source and destination triangle coordinates.
+        alpha: Blending factor.
     """
     t1, t2, t = triangles
 
@@ -123,11 +123,11 @@ def generate_morph_sequence(
     """Generates a face morphing sequence and saves it as a video.
 
     Args:
-        img_pair (tuple): A tuple containing (img1, img2) images.
-        points_pair (tuple): A tuple containing (points1, points2) landmarks.
-        tri_list (list): A list of triangle vertex indices.
-        video_config (tuple): Video parameters (duration, frame_rate, size,
-        output).
+        img_pair: Source images in morph order.
+        points_pair: Landmark points for each source image.
+        tri_list: Triangle vertex indices.
+        video_config: Video parameters in duration, frame rate, size, and
+            output path order.
     """
     img1, img2 = img_pair
     points1, points2 = points_pair

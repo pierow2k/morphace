@@ -21,14 +21,13 @@ def draw_delaunay(
     """Extracts triangle vertex indices from a Subdiv2D object.
 
     Args:
-        f_w (int): Width of the image frame.
-        f_h (int): Height of the image frame.
-        subdiv (cv2.Subdiv2D): The subdivision object containing the points.
-        dictionary1 (dict): Mapping from point coordinates to original indices.
+        f_w: Width of the image frame.
+        f_h: Height of the image frame.
+        subdiv: The subdivision object containing the points.
+        dictionary1: Mapping from point coordinates to original indices.
 
     Returns:
-        list: A list of tuples, each containing three point indices for a
-        triangle.
+        Triangle vertex indices from the subdivision.
     """
     list4: TriangleList = []
 
@@ -54,12 +53,12 @@ def make_delaunay(f_w: int, f_h: int, the_list: PointArray) -> TriangleList:
     """Creates a Delaunay triangulation from a provided list of points.
 
     Args:
-        f_w (int): Width of the image frame.
-        f_h (int): Height of the image frame.
-        the_list (np.ndarray): Array of landmark points.
+        f_w: Width of the image frame.
+        f_h: Height of the image frame.
+        the_list: Landmark points to triangulate.
 
     Returns:
-        list: A list of triangle vertex indices.
+        Triangle vertex indices.
     """
     # Make a rectangle.
     rect = (0, 0, f_w, f_h)
