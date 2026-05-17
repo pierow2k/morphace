@@ -114,11 +114,16 @@ def _morph_triangle(
     )
 
 
+def _as_float_point(point: Point) -> FloatPoint:
+    return (float(point[0]), float(point[1]))
+
+
 def generate_morph_sequence(
     img_pair: ImagePair,
     points_pair: tuple[LandmarkList, LandmarkList],
     tri_list: TriangleList,
     video_config: tuple[int, int, Size, str],
+    show_triangles: bool,
 ) -> None:
     """Generates a face morphing sequence and saves it as a video.
 
@@ -128,6 +133,7 @@ def generate_morph_sequence(
         tri_list: Triangle vertex indices.
         video_config: Video parameters in duration, frame rate, size, and
             output path order.
+        show_triangles: Whether to show triangulation lines.
     """
     img1, img2 = img_pair
     points1, points2 = points_pair
@@ -200,6 +206,10 @@ def generate_morph_sequence(
             # Morph one triangle at a time.
             _morph_triangle(img1, img2, morphed_frame, (t1, t2, t), alpha)
 
+            if not show_triangles:
+                continue
+
+            # Draw triangle contours
             pt1 = (int(t[0][0]), int(t[0][1]))
             pt2 = (int(t[1][0]), int(t[1][1]))
             pt3 = (int(t[2][0]), int(t[2][1]))
@@ -215,7 +225,3 @@ def generate_morph_sequence(
 
     stdin.close()
     p.wait()
-
-
-def _as_float_point(point: Point) -> FloatPoint:
-    return (float(point[0]), float(point[1]))
