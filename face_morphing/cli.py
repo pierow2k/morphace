@@ -5,9 +5,8 @@ import logging
 import sys
 
 import cv2
-from face_landmark_detection import NoFaceFoundError
 
-from . import MorphConfig, morph_faces
+from . import MorphConfig, NoFaceFoundError, morph_faces
 
 logger = logging.getLogger(__name__)
 
