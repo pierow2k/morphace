@@ -40,12 +40,15 @@ def do_morphing(
         config: Configuration for the morph output.
         show_triangles: Whether to show triangulation lines.
     """
+    # Detect facial landmarks and create correspondence between images.
     size, img1, img2, points1, points2, list3 = generate_face_correspondences(
         img1, img2
     )
 
+    # Create a Delaunay triangulation from a provided list of points.
     tri = make_delaunay(size[1], size[0], list3)
 
+    # Generate a face morphing sequence and save it as a video.
     generate_morph_sequence(
         (img1, img2),
         (points1, points2),
@@ -55,5 +58,5 @@ def do_morphing(
     )
 
 
-# Expose the public API cleanly
+# Expose the public API .
 __all__ = ["MorphConfig", "do_morphing"]
