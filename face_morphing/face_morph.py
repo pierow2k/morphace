@@ -19,36 +19,37 @@ from ._typing import (
 
 _CV2 = cast("Any", cv2)
 _NP = cast("Any", np)
-
 TrianglePoints = tuple[list[FloatPoint], list[FloatPoint], list[FloatPoint]]
 
 
 def _apply_affine_transform(
     src: ImageArray,
-    src_rri: list[FloatPoint],
-    dst_tri: list[FloatPoint],
+    src_tri: list[FloatPoint] | np.ndarray,
+    dst_tri: list[FloatPoint] | np.ndarray,
     size: Size,
 ) -> ImageArray:
-    """Apply affine transform.
+    """Applies an affine transform to warp a source image patch.
 
-    Apply affine transform calculated using srcTri and dstTri calculated using
-    srcTri and dstTri to src and output an image of size.
+    Calculates the transform matrix mapping src_tri to dst_tri and applies it
+    to the source image.
 
     Args:
         src: The source image patch.
-        src_rri: Triangle coordinates in the source image.
-        dst_tri: Triangle coordinates in the destination image.
-        size: Output image size in width, height order.
+        src_tri: Triangle coordinates (3 points) in the source image.
+        dst_tri: Triangle coordinates (3 points) in the destination image.
+        size: Output image size (width, height).
 
     Returns:
         The warped image patch.
     """
-    # Given a pair of triangles, find the affine transform.
-    warp_mat = _CV2.getAffineTransform(
-        _NP.float32(src_rri), _NP.float32(dst_tri)
-    )
+    # Ensure inputs are float32 arrays for OpenCV
+    src_tri_arr = _NP.asarray(src_tri, dtype=_NP.float32)
+    dst_tri_arr = _NP.asarray(dst_tri, dtype=_NP.float32)
 
-    # Return the Affine Transform just found to the src image
+    # Given a pair of triangles, find the affine transform.
+    warp_mat = _CV2.getAffineTransform(src_tri_arr, dst_tri_arr)
+
+    # Apply the Affine Transform
     return _CV2.warpAffine(
         src,
         warp_mat,
