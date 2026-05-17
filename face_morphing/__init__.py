@@ -9,14 +9,10 @@ import dlib
 
 from ._typing import Any, ImageArray
 from .delaunay_triangulation import compute_delaunay_triangles
-from .face_landmark_detection import align_faces
+from .face_landmark_detection import NoFaceFoundError, align_faces
 from .face_morph import generate_morph_sequence
 
 logger = logging.getLogger(__name__)
-
-
-class NoFaceFoundError(Exception):
-    """Raised when there is no face found."""
 
 
 # Define the path relative to this file
@@ -102,4 +98,4 @@ def morph_faces(
 
 
 # Expose the public API .
-__all__ = ["MorphConfig", "morph_faces"]
+__all__ = ["MorphConfig", "NoFaceFoundError", "morph_faces"]
