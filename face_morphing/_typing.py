@@ -11,7 +11,7 @@ type PointArray = NDArray[Any]
 
 type FloatPoint = tuple[float, float]
 type Point = tuple[int, int]
-type Rect = tuple[int, int, int, int]
+type Bounds = tuple[int, int, int, int]  # (x_min, y_min, x_max, y_max)
 type Size = tuple[int, int]
 type Triangle = tuple[int, int, int]
 

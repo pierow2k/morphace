@@ -7,8 +7,8 @@ from pathlib import Path
 import dlib
 
 from ._typing import ImageArray
-from .delaunay_triangulation import make_delaunay
-from .face_landmark_detection import generate_face_correspondences
+from .delaunay_triangulation import compute_delaunay_triangles
+from .face_landmark_detection import align_faces
 from .face_morph import generate_morph_sequence
 
 logger = logging.getLogger(__name__)
@@ -69,12 +69,12 @@ def do_morphing(
         show_triangles: Whether to show triangulation lines.
     """
     # Detect facial landmarks and create correspondence between images.
-    size, img1, img2, points1, points2, list3 = generate_face_correspondences(
+    size, img1, img2, points1, points2, list3 = align_faces(
         img1, img2, _DETECTOR, _PREDICTOR
     )
 
     # Create a Delaunay triangulation from a provided list of points.
-    tri = make_delaunay(size[1], size[0], list3)
+    tri = compute_delaunay_triangles(size[1], size[0], list3)
 
     # Generate a face morphing sequence and save it as a video.
     generate_morph_sequence(
