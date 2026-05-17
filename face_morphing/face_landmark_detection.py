@@ -26,11 +26,11 @@ def calculate_margin_help(img1: ImageArray, img2: ImageArray) -> MarginInfo:
     """Calculates dimensions and offsets required to align two images.
 
     Args:
-        img1 (np.ndarray): The first input image.
-        img2 (np.ndarray): The second input image.
+        img1: The first input image.
+        img2: The second input image.
 
     Returns:
-        list: A list containing [size1, size2, diff0, diff1, avg0, avg1].
+        Shape, offset, and average-dimension values for the two images.
     """
     size1 = img1.shape
     size2 = img2.shape
@@ -46,11 +46,11 @@ def crop_image(img1: ImageArray, img2: ImageArray) -> ImagePair:
     """Resizes and crops two images so they have matching dimensions.
 
     Args:
-        img1 (np.ndarray): The first input image.
-        img2 (np.ndarray): The second input image.
+        img1: The first input image.
+        img2: The second input image.
 
     Returns:
-        list: A list containing the two processed images [img1, img2].
+        The two processed images in input order.
     """
     [size1, size2, diff0, diff1, avg0, avg1] = calculate_margin_help(img1, img2)
 
@@ -93,11 +93,11 @@ def crop_image_help(img1: ImageArray, img2: ImageArray) -> ImagePair:
     """Helper function to perform cropping of images based on margins.
 
     Args:
-        img1 (np.ndarray): The first input image.
-        img2 (np.ndarray): The second input image.
+        img1: The first input image.
+        img2: The second input image.
 
     Returns:
-        list: A list containing the two cropped images.
+        The two cropped images in input order.
     """
     [size1, size2, diff0, diff1, avg0, avg1] = calculate_margin_help(img1, img2)
 
@@ -122,16 +122,15 @@ def generate_face_correspondences(
     """Detects facial landmarks and creates correspondence between images.
 
     Args:
-        image1 (np.ndarray): The first input image.
-        image2 (np.ndarray): The second input image.
+        image1: The first input image.
+        image2: The second input image.
 
     Raises:
         NoFaceFoundError: If dlib fails to detect a face in either image.
 
     Returns:
-        list: A list containing [size, img1, img2, points1, points2, narray]
-            where narray contains the average coordinates of the landmarks
-            for both images.
+        Image size, cropped images, landmark points, and average landmark
+        coordinates for both images.
     """
     # Detect the points of face.
     detector = dlib.get_frontal_face_detector()
