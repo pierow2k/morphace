@@ -2,6 +2,9 @@
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
+
+import dlib
 
 from ._typing import ImageArray
 from .delaunay_triangulation import make_delaunay
@@ -26,6 +29,31 @@ class MorphConfig:
     output: str
 
 
+# Load models once at module level.
+try:
+    # Robust path handling relative to this file
+    _MODEL_PATH = (
+        Path(__file__).parent
+        / "utils"
+        / "shape_predictor_68_face_landmarks.dat"
+    )
+    if not _MODEL_PATH.exists():
+        # Fallback if running from different directory structure
+        _MODEL_PATH = (
+            Path("face_morphing")
+            / "utils"
+            / "shape_predictor_68_face_landmarks.dat"
+        )
+
+    _DETECTOR = dlib.get_frontal_face_detector()
+    _PREDICTOR = dlib.shape_predictor(str(_MODEL_PATH))
+except RuntimeError as e:
+    logger = logging.getLogger(__name__)
+    logger.warning("Could not load dlib models: %s", e)
+    _DETECTOR = None
+    _PREDICTOR = None
+
+
 def do_morphing(
     img1: ImageArray,
     img2: ImageArray,
@@ -42,7 +70,7 @@ def do_morphing(
     """
     # Detect facial landmarks and create correspondence between images.
     size, img1, img2, points1, points2, list3 = generate_face_correspondences(
-        img1, img2
+        img1, img2, _DETECTOR, _PREDICTOR
     )
 
     # Create a Delaunay triangulation from a provided list of points.
