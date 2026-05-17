@@ -92,7 +92,7 @@ def _get_boundary_points(h: int, w: int) -> list:
     ]
 
 
-def generate_face_correspondences(
+def align_faces(
     image1: ImageArray,
     image2: ImageArray,
     detector: Any | None = None,

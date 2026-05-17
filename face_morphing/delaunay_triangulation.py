@@ -1,79 +1,103 @@
 """Module for performing Delaunay triangulation on facial landmarks."""
 
 import cv2
+import numpy as np
 
-from ._typing import Point, PointArray, Rect, TriangleList
-
-
-# Check if a point is inside a rectangle
-def _rect_contains(rect: Rect, point: Point) -> bool:
-    """Check if a point is inside a rectangle using chained comparisons."""
-    return rect[0] <= point[0] <= rect[2] and rect[1] <= point[1] <= rect[3]
+from ._typing import Bounds, Point, PointArray, TriangleList
 
 
-# Write the delaunay triangles into a file
-def _draw_delaunay(
-    f_w: int,
-    f_h: int,
+def _is_within_bounds(bounds: Bounds, point: Point) -> bool:
+    """Check if a point is inside a rectangular boundary.
+
+    Args:
+        bounds: A tuple of (x_min, y_min, x_max, y_max).
+        point: A tuple of (x, y) coordinates.
+
+    Returns:
+        True if the point is inside or on the edge of the bounds.
+    """
+    x_min, y_min, x_max, y_max = bounds
+    px, py = point
+
+    return (x_min <= px <= x_max) and (y_min <= py <= y_max)
+
+
+def _extract_triangle_indices(
+    width: int,
+    height: int,
     subdiv: cv2.Subdiv2D,
-    dictionary1: dict[Point, int],
+    point_indices: dict[Point, int],
 ) -> TriangleList:
     """Extracts triangle vertex indices from a Subdiv2D object.
 
     Args:
-        f_w: Width of the image frame.
-        f_h: Height of the image frame.
+        width: Width of the image frame.
+        height: Height of the image frame.
         subdiv: The subdivision object containing the points.
-        dictionary1: Mapping from point coordinates to original indices.
+        point_indices: Mapping from point coordinates to original indices.
 
     Returns:
         Triangle vertex indices from the subdivision.
     """
-    list4: TriangleList = []
-
+    triangles: TriangleList = []
     triangle_list = subdiv.getTriangleList()
-    r = (0, 0, f_w, f_h)
+    bounds = (0, 0, width, height)
 
     for t in triangle_list:
+        # Extract points using tuple unpacking for clarity
         pt1 = (int(t[0]), int(t[1]))
         pt2 = (int(t[2]), int(t[3]))
         pt3 = (int(t[4]), int(t[5]))
 
-        if (
-            _rect_contains(r, pt1)
-            and _rect_contains(r, pt2)
-            and _rect_contains(r, pt3)
+        # Check geometric bounds first (optional optimization)
+        if not (
+            _is_within_bounds(bounds, pt1)
+            and _is_within_bounds(bounds, pt2)
+            and _is_within_bounds(bounds, pt3)
         ):
-            list4.append((dictionary1[pt1], dictionary1[pt2], dictionary1[pt3]))
+            continue
 
-    return list4
+        # Check existence in dictionary to handle virtual points generated
+        # by Subdiv2D (e.g., corners) that are not in the original set.
+        if (
+            pt1 in point_indices
+            and pt2 in point_indices
+            and pt3 in point_indices
+        ):
+            triangles.append(
+                (point_indices[pt1], point_indices[pt2], point_indices[pt3])
+            )
+
+    return triangles
 
 
-def make_delaunay(f_w: int, f_h: int, the_list: PointArray) -> TriangleList:
-    """Creates a Delaunay triangulation from a provided list of points.
+def compute_delaunay_triangles(
+    width: int,
+    height: int,
+    landmarks: PointArray,
+) -> TriangleList:
+    """Creates a Delaunay triangulation from a provided list of points."""
+    points_array = np.asarray(landmarks)
 
-    Args:
-        f_w: Width of the image frame.
-        f_h: Height of the image frame.
-        the_list: Landmark points to triangulate.
+    # Sanitize points: convert to int tuples
+    points: list[Point] = [(int(x), int(y)) for x, y in points_array]
 
-    Returns:
-        Triangle vertex indices.
-    """
-    # Make a rectangle.
-    rect = (0, 0, f_w, f_h)
+    # Create a mapping of coordinates to indices.
+    # We keep the first occurrence if duplicates exist.
+    index_map: dict[Point, int] = {}
+    for idx, pt in enumerate(points):
+        if pt not in index_map:
+            index_map[pt] = idx
 
-    # Create an instance of Subdiv2D.
+    # Initialize Subdiv2D with a padded rect to ensure all points are inside.
+    padding = 1
+    # Note: OpenCV Rect is (x, y, width, height)
+    rect = (-padding, -padding, width + 2 * padding, height + 2 * padding)
     subdiv = cv2.Subdiv2D(rect)
 
-    # Make a points list and a searchable dictionary.
-    the_list = the_list.tolist()
-    points: list[Point] = [(int(x[0]), int(x[1])) for x in the_list]
-    dictionary = dict(zip(points, range(len(points)), strict=True))
+    # Bulk insert unique points.
+    # We trust this will work because we sanitized inputs (padded bounds
+    # + unique points). If it fails, we want the error to propagate up.
+    subdiv.insert(list(index_map.keys()))
 
-    # Insert points into subdiv
-    for p in points:
-        subdiv.insert(p)
-
-    # Make and return delaunay triangulation list.
-    return _draw_delaunay(f_w, f_h, subdiv, dictionary)
+    return _extract_triangle_indices(width, height, subdiv, index_map)
