@@ -12,7 +12,6 @@ from ._typing import (
     ImageArray,
     ImagePair,
     LandmarkList,
-    Point,
     Size,
     TriangleList,
 )
@@ -149,10 +148,6 @@ def _morph_triangle(
     img[y_start:y_end, x_start:x_end] = img_roi * (1 - mask) + img_rect * mask
 
 
-def _as_float_point(point: Point) -> FloatPoint:
-    return (float(point[0]), float(point[1]))
-
-
 def generate_morph_sequence(
     img_pair: ImagePair,
     points_pair: tuple[LandmarkList, LandmarkList],
@@ -217,11 +212,8 @@ def generate_morph_sequence(
         for j in range(num_images):
             alpha = j / max(1, num_images - 1)
 
-            # Optimization: Vectorized calculation of intermediate points
+            # Vectorized calculation of intermediate points
             points_arr = (1 - alpha) * p1_arr + alpha * p2_arr
-            # Convert back to list of tuples to match expected type in
-            # helper functions
-            points: list[FloatPoint] = [tuple(p) for p in points_arr]
 
             # Allocate space for final output
             morphed_frame = _NP.zeros(img1_float.shape, dtype=_NP.float32)
@@ -229,35 +221,27 @@ def generate_morph_sequence(
             for i in range(len(tri_list)):
                 x, y, z = map(int, tri_list[i])
 
-                t1 = [
-                    _as_float_point(points1[x]),
-                    _as_float_point(points1[y]),
-                    _as_float_point(points1[z]),
-                ]
-                t2 = [
-                    _as_float_point(points2[x]),
-                    _as_float_point(points2[y]),
-                    _as_float_point(points2[z]),
-                ]
-                t = [points[x], points[y], points[z]]
+                # Optimization: Use NumPy fancy indexing to get triangle
+                # vertices
+                t1 = p1_arr[[x, y, z]]
+                t2 = p2_arr[[x, y, z]]
+                t = points_arr[[x, y, z]]
 
                 _morph_triangle(
                     img1_float, img2_float, morphed_frame, (t1, t2, t), alpha
                 )
 
                 if show_triangles:
-                    # Optimization: Use polylines for drawing triangles
-                    pts = _NP.array(
-                        [t[0], t[1], t[2]], dtype=_NP.int32
-                    ).reshape((-1, 1, 2))
+                    # Use polylines with the array slice directly
+                    # Reshape needed for polylines: (N, 1, 2)
+                    pts = t.reshape((-1, 1, 2)).astype(_NP.int32)
                     _CV2.polylines(
                         morphed_frame, [pts], True, (255, 255, 255), 1
                     )
 
-            # Safety: Clip values before casting to uint8 to prevent overflow
+            # Safety: Clip values before casting to uint8
             morphed_frame = _NP.clip(morphed_frame, 0, 255)
 
-            # Convert BGR (OpenCV) to RGB (PIL)
             res = Image.fromarray(
                 _CV2.cvtColor(_NP.uint8(morphed_frame), _CV2.COLOR_BGR2RGB)
             )
