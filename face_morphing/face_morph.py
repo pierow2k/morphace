@@ -23,7 +23,7 @@ _NP = cast("Any", np)
 TrianglePoints = tuple[list[FloatPoint], list[FloatPoint], list[FloatPoint]]
 
 
-def apply_affine_transform(
+def _apply_affine_transform(
     src: ImageArray,
     src_rri: list[FloatPoint],
     dst_tri: list[FloatPoint],
@@ -75,43 +75,77 @@ def _morph_triangle(
         triangles: Source and destination triangle coordinates.
         alpha: Blending factor.
     """
-    t1, t2, t = triangles
+    tri_src1, tri_src2, tri_dest = triangles
 
-    # Find bounding rectangle for each triangle
-    r1 = _CV2.boundingRect(_NP.float32([t1]))
-    r2 = _CV2.boundingRect(_NP.float32([t2]))
-    r = _CV2.boundingRect(_NP.float32([t]))
+    # Find bounding rectangles for each triangle
+    rect_src1 = _CV2.boundingRect(_NP.float32([tri_src1]))
+    rect_src2 = _CV2.boundingRect(_NP.float32([tri_src2]))
+    rect_dest = _CV2.boundingRect(_NP.float32([tri_dest]))
 
-    # Offset points by left top corner of the respective rectangles
-    t1_rect: list[FloatPoint] = []
-    t2_rect: list[FloatPoint] = []
-    t_rect: list[FloatPoint] = []
+    # Calculate offset points relative to top-left corner of bounding
+    # rectangles using list comprehensions for brevity and readability.
+    tri_src1_offset = [
+        (tri_src1[i][0] - rect_src1[0], tri_src1[i][1] - rect_src1[1])
+        for i in range(3)
+    ]
+    tri_src2_offset = [
+        (tri_src2[i][0] - rect_src2[0], tri_src2[i][1] - rect_src2[1])
+        for i in range(3)
+    ]
+    tri_dest_offset = [
+        (tri_dest[i][0] - rect_dest[0], tri_dest[i][1] - rect_dest[1])
+        for i in range(3)
+    ]
 
-    for i in range(3):
-        t_rect.append(((t[i][0] - r[0]), (t[i][1] - r[1])))
-        t1_rect.append(((t1[i][0] - r1[0]), (t1[i][1] - r1[1])))
-        t2_rect.append(((t2[i][0] - r2[0]), (t2[i][1] - r2[1])))
+    # Create mask for the destination triangle
+    # Dynamically determine channels to support grayscale or RGBA
+    # the rect_dest is (x, y, w, h).
+    rect_dest_width, rect_dest_height = rect_dest[2], rect_dest[3]
 
-    # Get mask by filling triangle
-    mask = np.zeros((r[3], r[2], 3), dtype=np.float32)
-    _CV2.fillConvexPoly(mask, _NP.int32(t_rect), (1.0, 1.0, 1.0), 16, 0)
+    # Handle both grayscale (2D) and color (3D) images
+    grayscale_dims = 2
+    if img.ndim == grayscale_dims:
+        mask_shape = (rect_dest_height, rect_dest_width)
+        fill_color = 1.0
+    else:
+        mask_shape = (rect_dest_height, rect_dest_width, img.shape[2])
+        fill_color = tuple([1.0] * img.shape[2])
 
-    # Apply warpImage to small rectangular patches
-    img1_rect = img1[r1[1] : r1[1] + r1[3], r1[0] : r1[0] + r1[2]]
-    img2_rect = img2[r2[1] : r2[1] + r2[3], r2[0] : r2[0] + r2[2]]
+    mask = np.zeros(mask_shape, dtype=np.float32)
+    _CV2.fillConvexPoly(mask, _NP.int32([tri_dest_offset]), fill_color, 16, 0)
 
-    size = (r[2], r[3])
-    warp_image1 = apply_affine_transform(img1_rect, t1_rect, t_rect, size)
-    warp_image2 = apply_affine_transform(img2_rect, t2_rect, t_rect, size)
+    # Crop source image patches
+    img1_rect = img1[
+        rect_src1[1] : rect_src1[1] + rect_src1[3],
+        rect_src1[0] : rect_src1[0] + rect_src1[2],
+    ]
+    img2_rect = img2[
+        rect_src2[1] : rect_src2[1] + rect_src2[3],
+        rect_src2[0] : rect_src2[0] + rect_src2[2],
+    ]
+
+    # Warp patches
+    size = (rect_dest_width, rect_dest_height)
+    warp_img1 = _apply_affine_transform(
+        img1_rect, tri_src1_offset, tri_dest_offset, size
+    )
+    warp_img2 = _apply_affine_transform(
+        img2_rect, tri_src2_offset, tri_dest_offset, size
+    )
 
     # Alpha blend rectangular patches
-    img_rect = (1.0 - alpha) * warp_image1 + alpha * warp_image2
+    img_rect = (1.0 - alpha) * warp_img1 + alpha * warp_img2
 
-    # Copy triangular region of the rectangular patch to the output image
-    img[r[1] : r[1] + r[3], r[0] : r[0] + r[2]] = (
-        img[r[1] : r[1] + r[3], r[0] : r[0] + r[2]] * (1 - mask)
-        + img_rect * mask
-    )
+    # Copy triangular region to output image using the mask
+    # Slicing coordinates for the destination image
+    y_start, x_start = rect_dest[1], rect_dest[0]
+    y_end, x_end = y_start + rect_dest_height, x_start + rect_dest_width
+
+    # Ensure we don't go out of bounds (safety check)
+    img_roi = img[y_start:y_end, x_start:x_end]
+
+    # Blend using mask (handle broadcasting if mask is 2D and img_roi is 3D)
+    img[y_start:y_end, x_start:x_end] = img_roi * (1 - mask) + img_rect * mask
 
 
 def _as_float_point(point: Point) -> FloatPoint:
