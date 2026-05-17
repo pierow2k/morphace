@@ -157,7 +157,7 @@ def generate_face_correspondences(
 
         j = j + 1
 
-        for _k, rect in enumerate(dets):
+        for _, rect in enumerate(dets):
             # Get the landmarks/parts for the face in rect.
             shape = predictor(img, rect)
 

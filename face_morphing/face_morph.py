@@ -1,7 +1,7 @@
 """Module for performing image warping and morphing between two faces."""
 
 from subprocess import PIPE, Popen
-from typing import Any, cast
+from typing import Any, cast  # pylint: disable=unused-import
 
 import cv2
 import numpy as np
