@@ -3,10 +3,12 @@
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 import cv2
 
 from . import MorphConfig, NoFaceFoundError, morph_faces
+from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,16 @@ def main() -> None:
     )
     parser.add_argument(
         "--img2", required=True, help="Path to the second source image"
+    )
+    parser.add_argument(
+        "--landmark-model",
+        type=Path,
+        default=None,
+        help=(
+            "Path to shape_predictor_68_face_landmarks.dat. "
+            "If omitted, the app checks FACE_MORPHING_LANDMARK_MODEL "
+            "and then the default user data directory."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -61,10 +73,17 @@ def main() -> None:
         logger.error("Could not read image: %s", args.img2)
         sys.exit(1)
 
+    try:
+        landmark_model_path = resolve_landmark_model_path(args.landmark_model)
+    except LandmarkModelNotFoundError as error:
+        logger.error("%s", error)  # noqa: TRY400
+        sys.exit(1)
+
     config = MorphConfig(
         duration=args.duration,
         frame_rate=args.frame,
         output=args.output,
+        landmark_model_path=landmark_model_path,
     )
 
     try:
