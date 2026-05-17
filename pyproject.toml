@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-face-morphing = "face_morphing:main"
+face-morphing = "face_morphing.cli:main"
 
 [dependency-groups]
 dev = [
