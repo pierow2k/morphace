@@ -11,7 +11,6 @@ from ._typing import (
     ImageArray,
     ImagePair,
     LandmarkList,
-    MarginInfo,
     Size,
 )
 
@@ -22,28 +21,21 @@ class NoFaceFoundError(Exception):
     """Raised when there is no face found."""
 
 
-def calculate_margin_help(img1: ImageArray, img2: ImageArray) -> MarginInfo:
-    """Calculates dimensions and offsets required to align two images.
-
-    Args:
-        img1: The first input image.
-        img2: The second input image.
-
-    Returns:
-        Shape, offset, and average-dimension values for the two images.
-    """
-    size1 = img1.shape
-    size2 = img2.shape
-    diff0 = abs(size1[0] - size2[0]) // 2
-    diff1 = abs(size1[1] - size2[1]) // 2
-    avg0 = (size1[0] + size2[0]) // 2
-    avg1 = (size1[1] + size2[1]) // 2
-
-    return (size1, size2, diff0, diff1, avg0, avg1)
+def _center_crop(img: ImageArray, target_h: int, target_w: int) -> ImageArray:
+    """Crops the center of an image to the target dimensions."""
+    h, w = img.shape[:2]
+    start_h = (h - target_h) // 2
+    start_w = (w - target_w) // 2
+    return img[start_h : start_h + target_h, start_w : start_w + target_w]
 
 
-def crop_image(img1: ImageArray, img2: ImageArray) -> ImagePair:
+def _crop_image(img1: ImageArray, img2: ImageArray) -> ImagePair:
     """Resizes and crops two images so they have matching dimensions.
+
+    Strategy: If one image is smaller in both dimensions, the larger image
+    is downscaled to cover the smaller image, and then center-cropped to
+    exact dimensions. If images are mixed sizes, both are center-cropped
+    to their overlapping minimum dimensions.
 
     Args:
         img1: The first input image.
@@ -52,68 +44,37 @@ def crop_image(img1: ImageArray, img2: ImageArray) -> ImagePair:
     Returns:
         The two processed images in input order.
     """
-    [size1, size2, diff0, diff1, avg0, avg1] = calculate_margin_help(img1, img2)
+    h1, w1 = img1.shape[:2]
+    h2, w2 = img2.shape[:2]
 
-    if size1[0] == size2[0] and size1[1] == size2[1]:
+    if h1 == h2 and w1 == w2:
         return (img1, img2)
 
-    if size1[0] <= size2[0] and size1[1] <= size2[1]:
-        scale0 = size1[0] / size2[0]
-        scale1 = size1[1] / size2[1]
-        if scale0 > scale1:
-            res = cv2.resize(
-                img2, None, fx=scale0, fy=scale0, interpolation=cv2.INTER_AREA
-            )
-        else:
-            res = cv2.resize(
-                img2, None, fx=scale1, fy=scale1, interpolation=cv2.INTER_AREA
-            )
-        return crop_image_help(img1, res)
+    # Case 1: img1 is strictly smaller. Downscale img2 to cover img1.
+    if h1 <= h2 and w1 <= w2:
+        scale = max(h1 / h2, w1 / w2)
+        # Calculate explicit dsize to avoid float rounding issues, ensuring
+        # the new dimensions are at least the target dimensions.
+        new_w2 = max(int(w2 * scale), w1)
+        new_h2 = max(int(h2 * scale), h1)
+        res2 = cv2.resize(img2, (new_w2, new_h2), interpolation=cv2.INTER_AREA)
+        return (img1, _center_crop(res2, h1, w1))
 
-    if size1[0] >= size2[0] and size1[1] >= size2[1]:
-        scale0 = size2[0] / size1[0]
-        scale1 = size2[1] / size1[1]
-        if scale0 > scale1:
-            res = cv2.resize(
-                img1, None, fx=scale0, fy=scale0, interpolation=cv2.INTER_AREA
-            )
-        else:
-            res = cv2.resize(
-                img1, None, fx=scale1, fy=scale1, interpolation=cv2.INTER_AREA
-            )
-        return crop_image_help(res, img2)
+    # Case 2: img2 is strictly smaller. Downscale img1 to cover img2.
+    if h1 >= h2 and w1 >= w2:
+        scale = max(h2 / h1, w2 / w1)
+        new_w1 = max(int(w1 * scale), w2)
+        new_h1 = max(int(h1 * scale), h2)
+        res1 = cv2.resize(img1, (new_w1, new_h1), interpolation=cv2.INTER_AREA)
+        return (_center_crop(res1, h2, w2), img2)
 
-    if size1[0] >= size2[0] and size1[1] <= size2[1]:
-        return (img1[diff0:avg0, :], img2[:, -diff1:avg1])
-
-    return (img1[:, diff1:avg1], img2[-diff0:avg0, :])
-
-
-def crop_image_help(img1: ImageArray, img2: ImageArray) -> ImagePair:
-    """Helper function to perform cropping of images based on margins.
-
-    Args:
-        img1: The first input image.
-        img2: The second input image.
-
-    Returns:
-        The two cropped images in input order.
-    """
-    [size1, size2, diff0, diff1, avg0, avg1] = calculate_margin_help(img1, img2)
-
-    if size1[0] == size2[0] and size1[1] == size2[1]:
-        return (img1, img2)
-
-    if size1[0] <= size2[0] and size1[1] <= size2[1]:
-        return (img1, img2[-diff0:avg0, -diff1:avg1])
-
-    if size1[0] >= size2[0] and size1[1] >= size2[1]:
-        return (img1[diff0:avg0, diff1:avg1], img2)
-
-    if size1[0] >= size2[0] and size1[1] <= size2[1]:
-        return (img1[diff0:avg0, :], img2[:, -diff1:avg1])
-
-    return (img1[:, diff1:avg1], img2[diff0:avg0, :])
+    # Case 3: Mixed dimensions. Crop both to the minimum shared dimensions.
+    target_h = min(h1, h2)
+    target_w = min(w1, w2)
+    return (
+        _center_crop(img1, target_h, target_w),
+        _center_crop(img2, target_h, target_w),
+    )
 
 
 def generate_face_correspondences(
@@ -139,7 +100,7 @@ def generate_face_correspondences(
     )
     corresp = np.zeros((68, 2))
 
-    img_list = crop_image(image1, image2)
+    img_list = _crop_image(image1, image2)
     list1: LandmarkList = []
     list2: LandmarkList = []
     j = 1
