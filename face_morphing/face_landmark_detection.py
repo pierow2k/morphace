@@ -1,6 +1,7 @@
 """Module for detecting facial landmarks and aligning images for morphing."""
 
 import logging
+from typing import Any
 
 import cv2
 import dlib
@@ -77,77 +78,98 @@ def _crop_image(img1: ImageArray, img2: ImageArray) -> ImagePair:
     )
 
 
+def _get_boundary_points(h: int, w: int) -> list:
+    """Generates 8 boundary points for image corners and midpoints."""
+    return [
+        (1, 1),  # Top-left
+        (w - 1, 1),  # Top-right
+        (w - 1, h - 1),  # Bottom-right
+        (1, h - 1),  # Bottom-left
+        ((w - 1) // 2, 1),  # Top-mid
+        (w - 1, (h - 1) // 2),  # Right-mid
+        ((w - 1) // 2, h - 1),  # Bottom-mid
+        (1, (h - 1) // 2),  # Left-mid
+    ]
+
+
 def generate_face_correspondences(
-    image1: ImageArray, image2: ImageArray
+    image1: ImageArray,
+    image2: ImageArray,
+    detector: Any | None = None,
+    predictor: dlib.shape_predictor | None = None,
 ) -> FaceCorrespondences:
     """Detects facial landmarks and creates correspondence between images.
 
     Args:
         image1: The first input image.
         image2: The second input image.
+        detector: Optional pre-loaded dlib detector. Uses global if None.
+        predictor: Optional pre-loaded dlib predictor. Uses global if None.
 
     Raises:
         NoFaceFoundError: If dlib fails to detect a face in either image.
+        RuntimeError: If dlib models are not loaded.
 
     Returns:
         Image size, cropped images, landmark points, and average landmark
         coordinates for both images.
     """
-    # Detect the points of face.
-    detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor(
-        "face_morphing/utils/shape_predictor_68_face_landmarks.dat"
-    )
-    corresp = np.zeros((68, 2))
+    if detector is None or predictor is None:
+        raise RuntimeError("Dlib models are not loaded. Cannot process faces.")
 
+    # Crop images to matching dimensions.
     img_list = _crop_image(image1, image2)
+    img1_cropped, img2_cropped = img_list
+
+    # Initialize storage
     list1: LandmarkList = []
     list2: LandmarkList = []
-    j = 1
-    size: Size = (img_list[0].shape[0], img_list[0].shape[1])
+    corresp = np.zeros((68, 2))
 
-    for img in img_list:
-        size = (img.shape[0], img.shape[1])
-        curr_list = list1 if j == 1 else list2
+    # Image size is guaranteed identical by _crop_image.
+    h, w = img1_cropped.shape[:2]
+    size: Size = (h, w)
 
+    # Process both images using a loop.
+    # Zip the images with their corresponding output lists
+    for img, out_list in zip(
+        [img1_cropped, img2_cropped], [list1, list2], strict=True
+    ):
         dets = detector(img, 1)
 
         if len(dets) == 0:
             logger.error("Unable to find a face in the image.")
             raise NoFaceFoundError("Unable to find a face in the image.")
 
-        j = j + 1
+        # Only process the PRIMARY face (first detection). Processing
+        # multiple faces would break the point correspondence math.
+        rect = dets[0]
 
-        for _, rect in enumerate(dets):
-            # Get the landmarks/parts for the face in rect.
-            shape = predictor(img, rect)
+        shape = predictor(img, rect)
 
-            for i in range(68):
-                x = shape.part(i).x
-                y = shape.part(i).y
-                curr_list.append((x, y))
-                corresp[i][0] += x
-                corresp[i][1] += y
+        # Extract landmarks
+        for i in range(68):
+            x = shape.part(i).x
+            y = shape.part(i).y
+            out_list.append((x, y))
+            corresp[i][0] += x
+            corresp[i][1] += y
 
-            # Add back the background
-            curr_list.append((1, 1))
-            curr_list.append((size[1] - 1, 1))
-            curr_list.append(((size[1] - 1) // 2, 1))
-            curr_list.append((1, size[0] - 1))
-            curr_list.append((1, (size[0] - 1) // 2))
-            curr_list.append(((size[1] - 1) // 2, size[0] - 1))
-            curr_list.append((size[1] - 1, size[0] - 1))
-            curr_list.append(((size[1] - 1), (size[0] - 1) // 2))
+        # Add boundary points to the individual list
+        out_list.extend(_get_boundary_points(h, w))
 
-    # Add back the background
+    # Compute average landmarks. corresp currently holds sum of points
+    # from img1 + img2
     narray = corresp / 2
-    narray = np.append(narray, [[1, 1]], axis=0)
-    narray = np.append(narray, [[size[1] - 1, 1]], axis=0)
-    narray = np.append(narray, [[(size[1] - 1) // 2, 1]], axis=0)
-    narray = np.append(narray, [[1, size[0] - 1]], axis=0)
-    narray = np.append(narray, [[1, (size[0] - 1) // 2]], axis=0)
-    narray = np.append(narray, [[(size[1] - 1) // 2, size[0] - 1]], axis=0)
-    narray = np.append(narray, [[size[1] - 1, size[0] - 1]], axis=0)
-    narray = np.append(narray, [[(size[1] - 1), (size[0] - 1) // 2]], axis=0)
 
-    return (size, img_list[0], img_list[1], list1, list2, narray)
+    # Append boundary points to the average (they are identical for both
+    # images) Note: Boundary points are static, so the average is just the
+    # boundary points themselves.
+    boundary_points = _get_boundary_points(h, w)
+
+    # Efficiently append multiple rows to numpy array.
+    # Note: The order of points added here must match the order in
+    # _get_boundary_points
+    narray = np.vstack([narray, boundary_points])
+
+    return (size, img1_cropped, img2_cropped, list1, list2, narray)
