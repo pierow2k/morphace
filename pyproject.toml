@@ -17,7 +17,7 @@ dependencies = [
 
 [project.scripts]
 face-morphing = "face_morphing.cli:main"
-face-align-images = "face_morphing.utils.alignment_cli:main"
+face-align-images = "face_morphing.prep_cli:main"
 
 
 [dependency-groups]
@@ -28,9 +28,9 @@ dev = [
   "pytest==9.0.3",
   "pytest-cov==7.1.0",
   "ruff==0.15.13",
-  # utils/combinegif.py
+  # GIF helper dependency
   "ImageIO==2.37.3",
-  # utils/face_alignment.py
+  # face_morphing/prep_face_alignment.py
   "scipy==1.17.1",
 ]
 
