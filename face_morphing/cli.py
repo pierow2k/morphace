@@ -39,16 +39,20 @@ def main() -> None:
     parser.add_argument(
         "--output",
         required=True,
-        help="Path to save the output video (e.g., output.mp4)",
+        default="morph.mp4",
+        help="Path to save the output video (default: %(default)s)",
     )
     parser.add_argument(
         "--duration",
         type=int,
         default=5,
-        help="Duration of the morph in seconds",
+        help="Duration of the morph in seconds (default: %(default)s)",
     )
     parser.add_argument(
-        "--frame", type=int, default=20, help="Frame rate (FPS)"
+        "--frame",
+        type=int,
+        default=20,
+        help="Frame rate (FPS) (default: %(default)s)",
     )
     parser.add_argument(
         "--show-triangles",
