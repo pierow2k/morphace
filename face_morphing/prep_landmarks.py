@@ -19,12 +19,9 @@ from typing import Any
 import dlib
 
 from ._typing import LandmarkList, PathInput
+from .face_landmark_detection import NoFaceFoundError
 
 logger = logging.getLogger(__name__)
-
-
-class NoFaceFoundError(Exception):
-    """Raised when there is no face found."""
 
 
 def get_landmarks(
