@@ -97,7 +97,9 @@ def main() -> None:
         # Intentionally use error() to avoid a scary stack trace for a user
         # input issue. We suppress the linter warning because we don't need
         # a traceback here.
-        logger.error("Error: Could not detect a face in one or both images.")  # noqa: TRY400
+        logger.error(  # noqa: TRY400
+            "Error: Could not detect a face in one or both images."
+        )
         sys.exit(1)
     except RuntimeError:
         # Use exception() to log the stack trace for unexpected system errors.
