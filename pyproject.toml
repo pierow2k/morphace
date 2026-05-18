@@ -17,7 +17,7 @@ dependencies = [
 
 [project.scripts]
 face-morphing = "face_morphing.cli:main"
-align-images = "face_morphing.utils.align_images:main"
+align-images = "face_morphing.utils.alignment_cli:main"
 
 
 [dependency-groups]
