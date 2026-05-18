@@ -5,6 +5,7 @@ import logging
 import sys
 from pathlib import Path
 
+from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
 from .prep_images import AlignmentConfig, align_faces
 
 
@@ -22,8 +23,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--landmark-model",
+        type=Path,
         default=None,
-        help="Path to shape_predictor_68_face_landmarks.dat.",
+        help=(
+            "Path to shape_predictor_68_face_landmarks.dat. "
+            "If omitted, the app checks FACE_MORPHING_LANDMARK_MODEL "
+            "and then the default user data directory."
+        ),
     )
     parser.add_argument(
         "--output_size",
@@ -64,10 +70,16 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
+    try:
+        landmark_model_path = resolve_landmark_model_path(args.landmark_model)
+    except LandmarkModelNotFoundError as error:
+        logging.error("%s", error)  # noqa: TRY400
+        return 1
+
     config = AlignmentConfig(
         raw_dir=Path(args.raw_dir),
         aligned_dir=Path(args.aligned_dir),
-        landmark_model_path=Path(args.landmark_model),
+        landmark_model_path=landmark_model_path,
         output_size=args.output_size,
         x_scale=args.x_scale,
         y_scale=args.y_scale,
