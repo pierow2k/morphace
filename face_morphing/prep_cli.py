@@ -8,6 +8,8 @@ from pathlib import Path
 from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
 from .prep_images import AlignmentConfig, align_faces
 
+logger = logging.getLogger(__name__)
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
@@ -72,8 +74,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         landmark_model_path = resolve_landmark_model_path(args.landmark_model)
-    except LandmarkModelNotFoundError as error:
-        logging.error("%s", error)  # noqa: TRY400
+    except LandmarkModelNotFoundError:
+        logger.exception("error resolving landmark model path")
         return 1
 
     config = AlignmentConfig(
