@@ -23,8 +23,11 @@ from typing import Any, cast  # pylint: disable=unused-import
 import numpy as np
 import PIL.Image
 import scipy.ndimage
+from numpy.typing import NDArray
 
-from ._typing import Array, FloatPoint, PathInput, Point
+from ._typing import FloatPoint, PathInput, Point
+
+type AlignmentQuad = NDArray[Any]
 
 logger = logging.getLogger(__name__)
 _SCIPY_NDIMAGE = cast("Any", scipy.ndimage)
@@ -79,7 +82,7 @@ def _rotate_90_ccw(vec: np.ndarray) -> np.ndarray:
 
 def _calculate_alignment_quad(
     face_landmarks: Sequence[FloatPoint | Point], options: AlignmentOptions
-) -> tuple[Array, float]:
+) -> tuple[AlignmentQuad, float]:
     """Calculate the alignment quadrilateral and crop size for a face image.
 
     This function computes a bounding quadrilateral (quad) based on facial
@@ -177,10 +180,10 @@ def _calculate_alignment_quad(
 
 def _shrink_image(
     img: PIL.Image.Image,
-    crop_corners: Array,
+    crop_corners: AlignmentQuad,
     crop_size: float,
     options: AlignmentOptions,
-) -> tuple[PIL.Image.Image, Array, float]:
+) -> tuple[PIL.Image.Image, AlignmentQuad, float]:
     """Conditionally downscale the image and adjust the crop geometry.
 
     If the detected face crop is significantly larger than the required output
@@ -232,8 +235,8 @@ def _shrink_image(
 
 
 def _crop_image(
-    img: PIL.Image.Image, quad: Array, border: int
-) -> tuple[PIL.Image.Image, Array]:
+    img: PIL.Image.Image, quad: AlignmentQuad, border: int
+) -> tuple[PIL.Image.Image, AlignmentQuad]:
     """Crops the image to the bounding box of the alignment quad plus a border.
 
     Args:
@@ -405,7 +408,7 @@ def _extend_image_canvas(
 
 
 def _warp_image(
-    img: PIL.Image.Image, quad: Array, options: AlignmentOptions
+    img: PIL.Image.Image, quad: AlignmentQuad, options: AlignmentOptions
 ) -> PIL.Image.Image:
     """Warps the input image to align the face based on the quad and resizes.
 

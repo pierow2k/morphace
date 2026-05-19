@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-from ._typing import Bounds, Point, PointArray, TriangleList
+from ._typing import Bounds, Point, LandmarkArray, TriangleList
 
 
 def _is_within_bounds(bounds: Bounds, point: Point) -> bool:
@@ -74,7 +74,7 @@ def _extract_triangle_indices(
 def compute_delaunay_triangles(
     width: int,
     height: int,
-    landmarks: PointArray,
+    landmarks: LandmarkArray,
 ) -> TriangleList:
     """Creates a Delaunay triangulation from a provided list of points."""
     points_array = np.asarray(landmarks)
