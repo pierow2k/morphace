@@ -5,11 +5,10 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import dlib
 from platformdirs import user_data_path
-
-from ._typing import Any
 
 MODEL_FILENAME = "shape_predictor_68_face_landmarks.dat"
 MODEL_ENV_VAR = "FACE_MORPHING_LANDMARK_MODEL"
@@ -25,12 +24,6 @@ def get_detector() -> Any:
     return dlib.get_frontal_face_detector()
 
 
-def get_predictor(landmark_model_path: Path) -> dlib.shape_predictor:
-    """Lazy-load the dlib shape predictor."""
-    model_path = landmark_model_path.expanduser().resolve()
-    return _load_predictor(str(model_path))
-
-
 @lru_cache(maxsize=1)
 def _load_predictor(model_path: str) -> dlib.shape_predictor:
     """Load and cache the dlib shape predictor."""
@@ -44,6 +37,12 @@ def _load_predictor(model_path: str) -> dlib.shape_predictor:
         )
 
     return dlib.shape_predictor(str(path))
+
+
+def get_predictor(landmark_model_path: Path) -> dlib.shape_predictor:
+    """Lazy-load the dlib shape predictor."""
+    model_path = landmark_model_path.expanduser().resolve()
+    return _load_predictor(str(model_path))
 
 
 def default_landmark_model_path() -> Path:
