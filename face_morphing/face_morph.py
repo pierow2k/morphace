@@ -1,8 +1,6 @@
 """Module for performing image warping and morphing between two faces."""
 
-from collections.abc import Iterator
-from contextlib import contextmanager
-from subprocess import PIPE, Popen
+from collections.abc import Sequence
 from typing import Any, cast
 
 import cv2
@@ -17,6 +15,7 @@ from ._typing import (
     Size,
     TriangleList,
 )
+from .video_utils import video_writer_context
 
 _CV2 = cast("Any", cv2)
 _NP = cast("Any", np)
@@ -200,60 +199,9 @@ def generate_morph_frame(  # noqa: PLR0913
     return _NP.clip(morphed_frame, 0, 255)
 
 
-@contextmanager
-def _video_writer_context(
-    config: tuple[int, int, Size, str],
-) -> Iterator[tuple[Any, int]]:
-    """Context manager to handle the FFmpeg process lifecycle."""
-    duration, frame_rate, size, output = config
-    width, height = size
-    num_images = max(int(duration * frame_rate), 1)
-    size_str = f"{width}x{height}"
-
-    p = Popen(
-        [
-            "ffmpeg",
-            "-y",
-            "-f",
-            "image2pipe",
-            "-r",
-            str(frame_rate),
-            "-s",
-            size_str,
-            "-i",
-            "-",
-            "-c:v",
-            "libx264",
-            "-crf",
-            "25",
-            "-vf",
-            "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-            "-pix_fmt",
-            "yuv420p",
-            output,
-        ],
-        stdin=PIPE,
-    )
-
-    if p.stdin is None:
-        raise RuntimeError("Unable to open ffmpeg input stream.")
-
-    try:
-        yield p.stdin, num_images
-    except BrokenPipeError:
-        raise RuntimeError("FFmpeg process ended unexpectedly.") from None
-    finally:
-        p.stdin.close()
-        p.wait()
-        if p.returncode != 0:
-            raise RuntimeError(
-                f"FFmpeg failed with return code {p.returncode}."
-            )
-
-
 def generate_morph_sequence(
     img_pair: ImagePair,
-    points_pair: tuple[LandmarkList, LandmarkList],
+    points_pair: Sequence[LandmarkList],
     tri_list: TriangleList,
     video_config: tuple[int, int, Size, str],
     show_triangles: bool,
@@ -268,7 +216,7 @@ def generate_morph_sequence(
     p1_arr = _NP.array(points1, dtype=_NP.float32)
     p2_arr = _NP.array(points2, dtype=_NP.float32)
 
-    with _video_writer_context(video_config) as (stdin, num_images):
+    with video_writer_context(video_config) as (stdin, num_images):
         for j in range(num_images):
             alpha = j / max(1, num_images - 1)
 
