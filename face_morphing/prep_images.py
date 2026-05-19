@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import _get_detector, _get_predictor
+from .models import get_detector, get_predictor
 from .prep_face_alignment import AlignmentOptions, image_align
 from .prep_landmarks import get_landmarks
 
@@ -41,8 +41,8 @@ def align_faces(config: AlignmentConfig) -> None:
         alpha=config.use_alpha,
     )
 
-    detector = _get_detector()
-    predictor = _get_predictor(config.landmark_model_path)
+    detector = get_detector()
+    predictor = get_predictor(config.landmark_model_path)
 
     for raw_img_path in config.raw_dir.iterdir():
         logger.info("Aligning %s ...", raw_img_path.name)

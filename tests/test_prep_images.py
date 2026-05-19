@@ -59,8 +59,8 @@ def test_align_faces_uses_shared_model_helpers(
             options,
         )
 
-    monkeypatch.setattr(prep_images, "_get_detector", fake_get_detector)
-    monkeypatch.setattr(prep_images, "_get_predictor", fake_get_predictor)
+    monkeypatch.setattr(prep_images, "get_detector", fake_get_detector)
+    monkeypatch.setattr(prep_images, "get_predictor", fake_get_predictor)
     monkeypatch.setattr(prep_images, "get_landmarks", fake_get_landmarks)
     monkeypatch.setattr(prep_images, "image_align", fake_image_align)
 

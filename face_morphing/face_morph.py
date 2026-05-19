@@ -1,8 +1,8 @@
 """Module for performing image warping and morphing between two faces."""
 
+from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from typing import Any, cast  # pylint: disable=unused-import
-from contextlib import contextmanager
 
 import cv2
 import numpy as np
@@ -209,10 +209,25 @@ def _video_writer_context(config: tuple[int, int, Size, str]):
 
     p = Popen(
         [
-            "ffmpeg", "-y", "-f", "image2pipe", "-r", str(frame_rate),
-            "-s", size_str, "-i", "-", "-c:v", "libx264", "-crf", "25",
-            "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-            "-pix_fmt", "yuv420p", output,
+            "ffmpeg",
+            "-y",
+            "-f",
+            "image2pipe",
+            "-r",
+            str(frame_rate),
+            "-s",
+            size_str,
+            "-i",
+            "-",
+            "-c:v",
+            "libx264",
+            "-crf",
+            "25",
+            "-vf",
+            "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+            "-pix_fmt",
+            "yuv420p",
+            output,
         ],
         stdin=PIPE,
     )
@@ -228,7 +243,9 @@ def _video_writer_context(config: tuple[int, int, Size, str]):
         p.stdin.close()
         p.wait()
         if p.returncode != 0:
-            raise RuntimeError(f"FFmpeg failed with return code {p.returncode}.")
+            raise RuntimeError(
+                f"FFmpeg failed with return code {p.returncode}."
+            )
 
 
 def generate_morph_sequence(
@@ -254,8 +271,13 @@ def generate_morph_sequence(
 
             # Logic is delegated to the helper
             frame = generate_morph_frame(
-                img1_float, img2_float, p1_arr, p2_arr,
-                tri_list, alpha, show_triangles
+                img1_float,
+                img2_float,
+                p1_arr,
+                p2_arr,
+                tri_list,
+                alpha,
+                show_triangles,
             )
 
             # Conversion and writing
