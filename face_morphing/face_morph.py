@@ -1,5 +1,6 @@
 """Module for performing image warping and morphing between two faces."""
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from typing import Any, cast  # pylint: disable=unused-import
@@ -153,7 +154,7 @@ def _morph_triangle(
     img[y_start:y_end, x_start:x_end] = img_roi * (1 - mask) + img_rect * mask
 
 
-def generate_morph_frame(
+def generate_morph_frame(  # noqa: PLR0913
     img1: ImageArray,
     img2: ImageArray,
     p1_arr: np.ndarray,
@@ -200,7 +201,9 @@ def generate_morph_frame(
 
 
 @contextmanager
-def _video_writer_context(config: tuple[int, int, Size, str]):
+def _video_writer_context(
+    config: tuple[int, int, Size, str],
+) -> Iterator[tuple[Any, int]]:
     """Context manager to handle the FFmpeg process lifecycle."""
     duration, frame_rate, size, output = config
     width, height = size
