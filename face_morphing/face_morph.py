@@ -2,6 +2,7 @@
 
 from subprocess import PIPE, Popen
 from typing import Any, cast  # pylint: disable=unused-import
+from contextlib import contextmanager
 
 import cv2
 import numpy as np
@@ -18,7 +19,11 @@ from ._typing import (
 
 _CV2 = cast("Any", cv2)
 _NP = cast("Any", np)
-TrianglePoints = tuple[list[FloatPoint], list[FloatPoint], list[FloatPoint]]
+TrianglePoints = tuple[
+    np.ndarray | list[FloatPoint],
+    np.ndarray | list[FloatPoint],
+    np.ndarray | list[FloatPoint],
+]
 
 
 def _apply_affine_transform(
@@ -148,6 +153,84 @@ def _morph_triangle(
     img[y_start:y_end, x_start:x_end] = img_roi * (1 - mask) + img_rect * mask
 
 
+def generate_morph_frame(
+    img1: ImageArray,
+    img2: ImageArray,
+    p1_arr: np.ndarray,
+    p2_arr: np.ndarray,
+    tri_list: TriangleList,
+    alpha: float,
+    show_triangles: bool,
+) -> ImageArray:
+    """Generates a single morphed frame for a given alpha value.
+
+    Args:
+        img1: Float32 source image 1.
+        img2: Float32 source image 2.
+        p1_arr: Source points for image 1.
+        p2_arr: Source points for image 2.
+        tri_list: List of triangles.
+        alpha: Interpolation factor (0.0 to 1.0).
+        show_triangles: Whether to draw triangle outlines.
+
+    Returns:
+        The generated morphed frame (float32 BGR array).
+    """
+    # Vectorized calculation of intermediate points
+    points_arr = (1 - alpha) * p1_arr + alpha * p2_arr
+
+    # Allocate space for final output
+    morphed_frame = _NP.zeros(img1.shape, dtype=_NP.float32)
+
+    for i in range(len(tri_list)):
+        x, y, z = map(int, tri_list[i])
+
+        # Use NumPy fancy indexing to get triangle vertices
+        t1 = p1_arr[[x, y, z]]
+        t2 = p2_arr[[x, y, z]]
+        t = points_arr[[x, y, z]]
+
+        _morph_triangle(img1, img2, morphed_frame, (t1, t2, t), alpha)
+
+        if show_triangles:
+            pts = t.reshape((-1, 1, 2)).astype(_NP.int32)
+            _CV2.polylines(morphed_frame, [pts], True, (255, 255, 255), 1)
+
+    return _NP.clip(morphed_frame, 0, 255)
+
+
+@contextmanager
+def _video_writer_context(config: tuple[int, int, Size, str]):
+    """Context manager to handle the FFmpeg process lifecycle."""
+    duration, frame_rate, size, output = config
+    width, height = size
+    num_images = max(int(duration * frame_rate), 1)
+    size_str = f"{width}x{height}"
+
+    p = Popen(
+        [
+            "ffmpeg", "-y", "-f", "image2pipe", "-r", str(frame_rate),
+            "-s", size_str, "-i", "-", "-c:v", "libx264", "-crf", "25",
+            "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+            "-pix_fmt", "yuv420p", output,
+        ],
+        stdin=PIPE,
+    )
+
+    if p.stdin is None:
+        raise RuntimeError("Unable to open ffmpeg input stream.")
+
+    try:
+        yield p.stdin, num_images
+    except BrokenPipeError:
+        raise RuntimeError("FFmpeg process ended unexpectedly.") from None
+    finally:
+        p.stdin.close()
+        p.wait()
+        if p.returncode != 0:
+            raise RuntimeError(f"FFmpeg failed with return code {p.returncode}.")
+
+
 def generate_morph_sequence(
     img_pair: ImagePair,
     points_pair: tuple[LandmarkList, LandmarkList],
@@ -158,105 +241,25 @@ def generate_morph_sequence(
     """Generates a face morphing sequence and saves it as a video."""
     img1, img2 = img_pair
     points1, points2 = points_pair
-    duration, frame_rate, size, output = video_config
 
-    # Optimization: Convert images to float32 once, outside the loop
+    # Pre-processing
     img1_float = _NP.float32(img1)
     img2_float = _NP.float32(img2)
-
-    # Optimization: Convert points to NumPy arrays for vectorization
-    # Assuming points are lists of (x, y) tuples
     p1_arr = _NP.array(points1, dtype=_NP.float32)
     p2_arr = _NP.array(points2, dtype=_NP.float32)
 
-    num_images = int(duration * frame_rate)
-
-    # Handle edge case where num_images is 1 (avoid division by zero)
-    num_images = max(num_images, 1)
-
-    # Fix: Ensure FFmpeg size string is Width x Height
-    # Docstring says size is (width, height)
-    width, height = size
-    size_str = f"{width}x{height}"
-
-    p = Popen(
-        [
-            "ffmpeg",
-            "-y",
-            "-f",
-            "image2pipe",
-            "-r",
-            str(frame_rate),
-            "-s",
-            size_str,  # Corrected order
-            "-i",
-            "-",
-            "-c:v",
-            "libx264",
-            "-crf",
-            "25",
-            "-vf",
-            "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-            "-pix_fmt",
-            "yuv420p",
-            output,
-        ],
-        stdin=PIPE,
-    )
-
-    if p.stdin is None:
-        raise RuntimeError("Unable to open ffmpeg input stream.")
-    stdin = p.stdin
-
-    try:
+    with _video_writer_context(video_config) as (stdin, num_images):
         for j in range(num_images):
             alpha = j / max(1, num_images - 1)
 
-            # Vectorized calculation of intermediate points
-            points_arr = (1 - alpha) * p1_arr + alpha * p2_arr
+            # Logic is delegated to the helper
+            frame = generate_morph_frame(
+                img1_float, img2_float, p1_arr, p2_arr,
+                tri_list, alpha, show_triangles
+            )
 
-            # Allocate space for final output
-            morphed_frame = _NP.zeros(img1_float.shape, dtype=_NP.float32)
-
-            for i in range(len(tri_list)):
-                x, y, z = map(int, tri_list[i])
-
-                # Optimization: Use NumPy fancy indexing to get triangle
-                # vertices
-                t1 = p1_arr[[x, y, z]]
-                t2 = p2_arr[[x, y, z]]
-                t = points_arr[[x, y, z]]
-
-                _morph_triangle(
-                    img1_float, img2_float, morphed_frame, (t1, t2, t), alpha
-                )
-
-                if show_triangles:
-                    # Use polylines with the array slice directly
-                    # Reshape needed for polylines: (N, 1, 2)
-                    pts = t.reshape((-1, 1, 2)).astype(_NP.int32)
-                    _CV2.polylines(
-                        morphed_frame, [pts], True, (255, 255, 255), 1
-                    )
-
-            # Safety: Clip values before casting to uint8
-            morphed_frame = _NP.clip(morphed_frame, 0, 255)
-
+            # Conversion and writing
             res = Image.fromarray(
-                _CV2.cvtColor(_NP.uint8(morphed_frame), _CV2.COLOR_BGR2RGB)
+                _CV2.cvtColor(_NP.uint8(frame), _CV2.COLOR_BGR2RGB)
             )
             res.save(stdin, "JPEG")
-
-    except BrokenPipeError:
-        # Handle case where FFmpeg closes early
-        raise RuntimeError("FFmpeg process ended unexpectedly.") from None
-    finally:
-        stdin.close()
-        p.wait()
-
-    # Robustness: Check if FFmpeg succeeded
-    if p.returncode != 0:
-        raise RuntimeError(
-            f"FFmpeg failed with return code {p.returncode}. "
-            "Video may be corrupt."
-        )
