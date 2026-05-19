@@ -5,9 +5,8 @@ from typing import Any
 
 from numpy.typing import NDArray
 
-type Array = NDArray[Any]
 type ImageArray = NDArray[Any]
-type PointArray = NDArray[Any]
+type LandmarkArray = NDArray[Any]
 
 type FloatPoint = tuple[float, float]
 type Point = tuple[int, int]
@@ -27,5 +26,5 @@ type FaceCorrespondences = tuple[
     ImageArray,
     LandmarkList,
     LandmarkList,
-    PointArray,
+    LandmarkArray,
 ]
