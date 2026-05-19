@@ -7,8 +7,10 @@ from pathlib import Path
 
 import cv2
 
-from . import MorphConfig, NoFaceFoundError, morph_faces
+from .config import MorphConfig
+from .face_landmark_detection import NoFaceFoundError
 from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
+from .workflow import morph_faces
 
 logger = logging.getLogger(__name__)
 

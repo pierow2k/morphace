@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-from ._typing import Bounds, Point, LandmarkArray, TriangleList
+from ._typing import Bounds, LandmarkArray, Point, TriangleList
 
 
 def _is_within_bounds(bounds: Bounds, point: Point) -> bool:

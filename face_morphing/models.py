@@ -1,11 +1,15 @@
-"""Helpers for locating the dlib landmark model."""
+"""Helpers for resolving and loading face landmark models."""
 
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from pathlib import Path
 
+import dlib
 from platformdirs import user_data_path
+
+from ._typing import Any
 
 MODEL_FILENAME = "shape_predictor_68_face_landmarks.dat"
 MODEL_ENV_VAR = "FACE_MORPHING_LANDMARK_MODEL"
@@ -13,6 +17,33 @@ MODEL_ENV_VAR = "FACE_MORPHING_LANDMARK_MODEL"
 
 class LandmarkModelNotFoundError(FileNotFoundError):
     """Raised when the dlib landmark model file cannot be found."""
+
+
+@lru_cache(maxsize=1)
+def get_detector() -> Any:
+    """Lazy-load the dlib face detector."""
+    return dlib.get_frontal_face_detector()
+
+
+def get_predictor(landmark_model_path: Path) -> dlib.shape_predictor:
+    """Lazy-load the dlib shape predictor."""
+    model_path = landmark_model_path.expanduser().resolve()
+    return _load_predictor(str(model_path))
+
+
+@lru_cache(maxsize=1)
+def _load_predictor(model_path: str) -> dlib.shape_predictor:
+    """Load and cache the dlib shape predictor."""
+    path = Path(model_path)
+
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Dlib model file not found at: {path}\n"
+            "Pass --landmark-model, set FACE_MORPHING_LANDMARK_MODEL, "
+            "or place the model file in the expected location."
+        )
+
+    return dlib.shape_predictor(str(path))
 
 
 def default_landmark_model_path() -> Path:

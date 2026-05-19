@@ -70,7 +70,7 @@ def test_main_builds_alignment_config(
 def test_main_returns_error_when_model_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Verify prep CLI returns an error before alignment when model is absent."""
+    """Verify prep CLI returns error before alignment if model is absent."""
     called_align_faces = False
 
     def fake_align_faces(config: AlignmentConfig) -> None:
