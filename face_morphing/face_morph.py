@@ -3,7 +3,7 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from subprocess import PIPE, Popen
-from typing import Any, cast  # pylint: disable=unused-import
+from typing import Any, cast
 
 import cv2
 import numpy as np
