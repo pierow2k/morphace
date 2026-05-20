@@ -7,6 +7,7 @@ from importlib.metadata import version
 from pathlib import Path
 
 from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
+from .prep_face_alignment import FaceAlignmentOptions
 from .prep_images import AlignmentConfig, align_faces
 
 logger = logging.getLogger(__name__)
@@ -65,10 +66,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=float,
     )
     parser.add_argument(
-        "--use-alpha",
+        "--alpha",
         default=False,
         help="Add an alpha channel for masking",
-        type=bool,
+        action="store_true",
     )
     parser.add_argument(
         "--version",
@@ -94,11 +95,13 @@ def main(argv: list[str] | None = None) -> int:
         raw_dir=Path(args.raw_dir),
         aligned_dir=Path(args.aligned_dir),
         landmark_model_path=landmark_model_path,
-        output_size=args.output_size,
-        x_scale=args.x_scale,
-        y_scale=args.y_scale,
-        em_scale=args.em_scale,
-        use_alpha=args.use_alpha,
+        face_alignment=FaceAlignmentOptions(
+            output_size=args.output_size,
+            x_scale=args.x_scale,
+            y_scale=args.y_scale,
+            em_scale=args.em_scale,
+            alpha=args.alpha,
+        ),
     )
 
     align_faces(config, overwrite=args.overwrite)
