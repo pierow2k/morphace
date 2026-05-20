@@ -13,6 +13,7 @@ Example:
 import argparse
 import logging
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 import cv2
@@ -73,6 +74,11 @@ def main() -> None:
         action="store_true",
         default=False,
         help="Show triangulation mesh in the video",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {version('morphace')}",
     )
     args = parser.parse_args()
 
