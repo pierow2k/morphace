@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from face_morphing import prep_cli
-from face_morphing.models import LandmarkModelNotFoundError
-from face_morphing.prep_images import AlignmentConfig
+from morphace import prep_cli
+from morphace.models import LandmarkModelNotFoundError
+from morphace.prep_images import AlignmentConfig
 
 
 def test_main_builds_alignment_config(

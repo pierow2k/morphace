@@ -1,6 +1,6 @@
 # __init__.py
 
-"""Public API for the face_morphing package."""
+"""Public API for the morphace package."""
 
 from .config import MorphConfig
 from .face_landmark_detection import NoFaceFoundError

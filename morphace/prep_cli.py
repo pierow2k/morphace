@@ -29,7 +29,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help=(
             "Path to shape_predictor_68_face_landmarks.dat. "
-            "If omitted, the app checks FACE_MORPHING_LANDMARK_MODEL "
+            "If omitted, the app checks MORPHACE_LANDMARK_MODEL "
             "and then the default user data directory."
         ),
     )

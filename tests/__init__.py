@@ -1,1 +1,1 @@
-"""Tests for face_morphing."""
+"""Tests for morphace."""

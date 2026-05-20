@@ -11,7 +11,7 @@ import dlib
 from platformdirs import user_data_path
 
 MODEL_FILENAME = "shape_predictor_68_face_landmarks.dat"
-MODEL_ENV_VAR = "FACE_MORPHING_LANDMARK_MODEL"
+MODEL_ENV_VAR = "MORPHACE_LANDMARK_MODEL"
 
 
 class LandmarkModelNotFoundError(FileNotFoundError):
@@ -32,7 +32,7 @@ def _load_predictor(model_path: str) -> dlib.shape_predictor:
     if not path.is_file():
         raise FileNotFoundError(
             f"Dlib model file not found at: {path}\n"
-            "Pass --landmark-model, set FACE_MORPHING_LANDMARK_MODEL, "
+            "Pass --landmark-model, set MORPHACE_LANDMARK_MODEL, "
             "or place the model file in the expected location."
         )
 
@@ -49,7 +49,7 @@ def default_landmark_model_path() -> Path:
     """Return the default per-user location for the landmark model."""
     return (
         user_data_path(
-            "face-morphing",
+            appname="morphace",
             appauthor=False,
             ensure_exists=True,
         )
@@ -63,7 +63,7 @@ def resolve_landmark_model_path(model_path: str | Path | None = None) -> Path:
     Resolution order:
 
     1. Explicit CLI path.
-    2. FACE_MORPHING_LANDMARK_MODEL environment variable.
+    2. MORPHACE_LANDMARK_MODEL environment variable.
     3. Default per-user app data directory.
 
     Args:
