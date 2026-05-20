@@ -50,7 +50,7 @@ def align_faces(config: AlignmentConfig) -> None:
     for raw_img_path in config.raw_dir.iterdir():
         logger.info("Aligning %s ...", raw_img_path.name)
         try:
-            first_face_name = f"{raw_img_path.stem}_01.png"
+            first_face_name = f"{raw_img_path.stem}_face01.png"
             if (config.aligned_dir / first_face_name).is_file():
                 logger.info("skipping existing file %s", first_face_name)
                 continue
@@ -63,7 +63,7 @@ def align_faces(config: AlignmentConfig) -> None:
             ):
                 try:
                     logger.info("Starting face alignment...")
-                    face_img_name = f"{raw_img_path.stem}_{i:02d}.png"
+                    face_img_name = f"{raw_img_path.stem}_face{i:02d}.png"
                     aligned_face_path = config.aligned_dir / face_img_name
                     image_align(
                         raw_img_path,
