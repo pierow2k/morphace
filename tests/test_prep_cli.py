@@ -6,6 +6,7 @@ import pytest
 
 from morphace import prep_cli
 from morphace.models import LandmarkModelNotFoundError
+from morphace.prep_face_alignment import FaceAlignmentOptions
 from morphace.prep_images import AlignmentConfig
 
 
@@ -51,8 +52,7 @@ def test_main_builds_alignment_config(
             "0.9",
             "--em-scale",
             "0.2",
-            "--use-alpha",
-            "True",
+            "--alpha",
         ]
     )
 
@@ -62,11 +62,13 @@ def test_main_builds_alignment_config(
             raw_dir=Path("raw"),
             aligned_dir=Path("aligned"),
             landmark_model_path=Path("resolved_shape_predictor.dat"),
-            output_size=512,
-            x_scale=1.2,
-            y_scale=0.9,
-            em_scale=0.2,
-            use_alpha=True,
+            face_alignment=FaceAlignmentOptions(
+                output_size=512,
+                x_scale=1.2,
+                y_scale=0.9,
+                em_scale=0.2,
+                alpha=True,
+            ),
         )
     ]
 

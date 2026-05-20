@@ -73,11 +73,13 @@ def test_align_faces_uses_shared_model_helpers(
             raw_dir=raw_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-            output_size=512,
-            x_scale=1.2,
-            y_scale=0.9,
-            em_scale=0.2,
-            use_alpha=True,
+            face_alignment=FaceAlignmentOptions(
+                output_size=512,
+                x_scale=1.2,
+                y_scale=0.9,
+                em_scale=0.2,
+                alpha=True,
+            ),
         )
     )
 
@@ -96,3 +98,16 @@ def test_align_faces_uses_shared_model_helpers(
             alpha=True,
         ),
     )
+
+
+def test_alignment_config_uses_default_face_alignment_options(
+    tmp_path: Path,
+) -> None:
+    """Verify image prep defaults to standard face alignment options."""
+    config = prep_images.AlignmentConfig(
+        raw_dir=tmp_path / "raw",
+        aligned_dir=tmp_path / "aligned",
+        landmark_model_path=Path("resolved_model.dat"),
+    )
+
+    assert config.face_alignment == FaceAlignmentOptions()

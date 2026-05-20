@@ -8,7 +8,7 @@ number appended to the filename.
 # pylint: disable=broad-exception-caught
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .models import get_detector, get_predictor
@@ -18,18 +18,23 @@ from .prep_landmarks import get_landmarks
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class AlignmentConfig:
-    """Configuration for the alignment pipeline."""
+    """Configuration for the image alignment pipeline.
+
+    Attributes:
+        raw_dir: Directory containing source images.
+        aligned_dir: Directory where aligned images are written.
+        landmark_model_path: Path to the dlib landmark predictor model.
+        face_alignment: Options used when aligning each detected face.
+    """
 
     raw_dir: Path
     aligned_dir: Path
     landmark_model_path: Path
-    output_size: int = 1024
-    x_scale: float = 1.0
-    y_scale: float = 1.0
-    em_scale: float = 0.1
-    use_alpha: bool = False
+    face_alignment: FaceAlignmentOptions = field(
+        default_factory=FaceAlignmentOptions
+    )
 
 
 def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
@@ -39,14 +44,6 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
         config: Pipeline configuration options.
         overwrite: Whether to overwrite existing aligned images.
     """
-    alignment_options = FaceAlignmentOptions(
-        output_size=config.output_size,
-        x_scale=config.x_scale,
-        y_scale=config.y_scale,
-        em_scale=config.em_scale,
-        alpha=config.use_alpha,
-    )
-
     detector = get_detector()
     predictor = get_predictor(config.landmark_model_path)
 
@@ -74,7 +71,7 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
                         raw_img_path,
                         aligned_face_path,
                         face_landmarks,
-                        alignment_options,
+                        config.face_alignment,
                     )
                     logger.info("Wrote result %s", aligned_face_path)
                 except Exception:
