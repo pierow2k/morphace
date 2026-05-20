@@ -1,6 +1,8 @@
 """Align faces and producing cropped images from a directory of raw images.
 
-Defers to `image_align` to align and crop faces for each image file.
+Detects each face in a given image, defers to `image_align` to align and
+crop the face, and saves the result in the output directory with the face
+number appended to the filename.
 """
 
 # pylint: disable=broad-exception-caught
@@ -30,11 +32,12 @@ class AlignmentConfig:
     use_alpha: bool = False
 
 
-def align_faces(config: AlignmentConfig) -> None:
+def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
     """Produce aligned face crops from raw images.
 
     Args:
         config: Pipeline configuration options.
+        overwrite: Whether to overwrite existing aligned images.
     """
     alignment_options = AlignmentOptions(
         output_size=config.output_size,
@@ -51,7 +54,9 @@ def align_faces(config: AlignmentConfig) -> None:
         logger.info("Aligning %s ...", raw_img_path.name)
         try:
             first_face_name = f"{raw_img_path.stem}_face01.png"
-            if (config.aligned_dir / first_face_name).is_file():
+            if (
+                config.aligned_dir / first_face_name
+            ).is_file() and not overwrite:
                 logger.info("skipping existing file %s", first_face_name)
                 continue
             logger.info("Getting landmarks...")
