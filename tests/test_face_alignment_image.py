@@ -4,7 +4,7 @@ import numpy as np
 import PIL.Image
 import pytest
 
-from morphace.face_alignment_image import (
+from morphace.prep_alignment_image import (
     prepare_alignment_canvas,
     warp_aligned_face,
 )

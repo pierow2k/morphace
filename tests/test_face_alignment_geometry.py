@@ -2,7 +2,7 @@
 
 import pytest
 
-from morphace.face_alignment_geometry import calculate_alignment_quad
+from morphace.prep_alignment_geometry import calculate_alignment_quad
 from morphace.prep_face_alignment import FaceAlignmentOptions
 
 

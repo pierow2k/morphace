@@ -2,8 +2,8 @@
 
 """Public API for the morphace package."""
 
-from .config import MorphConfig
-from .face_landmark_detection import NoFaceFoundError
-from .workflow import morph_faces
+from .morph_config import MorphConfig
+from .morph_landmark_detection import NoFaceFoundError
+from .morph_workflow import morph_faces
 
 __all__ = ["MorphConfig", "NoFaceFoundError", "morph_faces"]

@@ -7,11 +7,11 @@ face alignment, Delaunay triangulation, and sequence generation.
 from pathlib import Path
 
 from ._typing import ImageArray
-from .config import MorphConfig
-from .delaunay_triangulation import compute_delaunay_triangles
-from .face_landmark_detection import align_faces
-from .face_morph import generate_morph_sequence
 from .models import get_detector, get_predictor
+from .morph_config import MorphConfig
+from .morph_face import generate_morph_sequence
+from .morph_landmark_detection import align_faces
+from .morph_triangulation import compute_delaunay_triangles
 
 
 def morph_faces(
