@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
@@ -62,6 +63,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=False,
         help="Add an alpha channel for masking",
         type=bool,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {version('morphace')}",
     )
     return parser.parse_args(argv)
 
