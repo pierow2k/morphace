@@ -41,25 +41,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
     )
     parser.add_argument(
-        "--x_scale",
-        default=1.0,
-        help="Scaling factor for x dimension",
-        type=float,
-    )
-    parser.add_argument(
-        "--y_scale",
-        default=1.0,
-        help="Scaling factor for y dimension",
-        type=float,
-    )
-    parser.add_argument(
-        "--em_scale",
+        "--em-scale",
         default=0.1,
         help="Scaling factor for eye-mouth distance",
         type=float,
     )
     parser.add_argument(
-        "--use_alpha",
+        "--x-scale",
+        default=1.0,
+        help="Scaling factor for x dimension",
+        type=float,
+    )
+    parser.add_argument(
+        "--y-scale",
+        default=1.0,
+        help="Scaling factor for y dimension",
+        type=float,
+    )
+    parser.add_argument(
+        "--use-alpha",
         default=False,
         help="Add an alpha channel for masking",
         type=bool,
