@@ -1,6 +1,8 @@
-# workflow.py
+"""High-level face morphing workflow.
 
-"""High-level face morphing workflow."""
+Orchestrates the complete face morphing pipeline by coordinating
+face alignment, Delaunay triangulation, and sequence generation.
+"""
 
 from pathlib import Path
 
