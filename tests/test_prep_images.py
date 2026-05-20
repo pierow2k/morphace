@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from morphace import prep_images
-from morphace.prep_face_alignment import AlignmentOptions
+from morphace.prep_face_alignment import FaceAlignmentOptions
 
 
 def test_align_faces_uses_shared_model_helpers(
@@ -45,14 +45,14 @@ def test_align_faces_uses_shared_model_helpers(
         calls["landmark_args"] = (image, detector, predictor)
         return [face_landmarks]
 
-    def fake_image_align(
+    def fake_align_face_image(
         src_file: Path,
         dst_file: Path,
         face_landmarks: list[tuple[float, float]],
-        options: AlignmentOptions,
+        options: FaceAlignmentOptions,
     ) -> None:
         """Capture the image alignment call."""
-        calls["image_align_args"] = (
+        calls["align_face_image_args"] = (
             src_file,
             dst_file,
             face_landmarks,
@@ -62,7 +62,11 @@ def test_align_faces_uses_shared_model_helpers(
     monkeypatch.setattr(prep_images, "get_detector", fake_get_detector)
     monkeypatch.setattr(prep_images, "get_predictor", fake_get_predictor)
     monkeypatch.setattr(prep_images, "get_landmarks", fake_get_landmarks)
-    monkeypatch.setattr(prep_images, "image_align", fake_image_align)
+    monkeypatch.setattr(
+        prep_images,
+        "align_face_image",
+        fake_align_face_image,
+    )
 
     prep_images.align_faces(
         prep_images.AlignmentConfig(
@@ -80,11 +84,11 @@ def test_align_faces_uses_shared_model_helpers(
     assert calls["detector_loaded"] is True
     assert calls["landmark_model_path"] == Path("resolved_model.dat")
     assert calls["landmark_args"] == (raw_img_path, detector, predictor)
-    assert calls["image_align_args"] == (
+    assert calls["align_face_image_args"] == (
         raw_img_path,
-        aligned_dir / "face_01.png",
+        aligned_dir / "face_face01.png",
         face_landmarks,
-        AlignmentOptions(
+        FaceAlignmentOptions(
             output_size=512,
             x_scale=1.2,
             y_scale=0.9,

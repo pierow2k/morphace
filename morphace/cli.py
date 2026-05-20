@@ -78,7 +78,7 @@ def main() -> None:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {version('morphace')}",
+        version="%(prog)s " + version("morphace"),
     )
     args = parser.parse_args()
 

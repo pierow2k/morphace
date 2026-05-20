@@ -15,8 +15,12 @@ def test_main_builds_alignment_config(
     """Verify prep CLI passes parsed arguments to align_faces."""
     captured_configs: list[AlignmentConfig] = []
 
-    def fake_align_faces(config: AlignmentConfig) -> None:
+    def fake_align_faces(
+        config: AlignmentConfig,
+        overwrite: bool = False,
+    ) -> None:
         """Capture the parsed prep configuration."""
+        assert overwrite is False
         captured_configs.append(config)
 
     def fake_resolve_landmark_model_path(
@@ -41,13 +45,13 @@ def test_main_builds_alignment_config(
             "shape_predictor.dat",
             "--output_size",
             "512",
-            "--x_scale",
+            "--x-scale",
             "1.2",
-            "--y_scale",
+            "--y-scale",
             "0.9",
-            "--em_scale",
+            "--em-scale",
             "0.2",
-            "--use_alpha",
+            "--use-alpha",
             "True",
         ]
     )

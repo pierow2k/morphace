@@ -73,7 +73,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {version('morphace')}",
+        version="%(prog)s " + version("morphace"),
     )
     return parser.parse_args(argv)
 

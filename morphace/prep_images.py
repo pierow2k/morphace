@@ -1,6 +1,6 @@
 """Align faces and producing cropped images from a directory of raw images.
 
-Detects each face in a given image, defers to `image_align` to align and
+Detects each face in a given image, defers to `align_face_image` to align and
 crop the face, and saves the result in the output directory with the face
 number appended to the filename.
 """
@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .models import get_detector, get_predictor
-from .prep_face_alignment import AlignmentOptions, image_align
+from .prep_face_alignment import FaceAlignmentOptions, align_face_image
 from .prep_landmarks import get_landmarks
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
         config: Pipeline configuration options.
         overwrite: Whether to overwrite existing aligned images.
     """
-    alignment_options = AlignmentOptions(
+    alignment_options = FaceAlignmentOptions(
         output_size=config.output_size,
         x_scale=config.x_scale,
         y_scale=config.y_scale,
@@ -70,7 +70,7 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
                     logger.info("Starting face alignment...")
                     face_img_name = f"{raw_img_path.stem}_face{i:02d}.png"
                     aligned_face_path = config.aligned_dir / face_img_name
-                    image_align(
+                    align_face_image(
                         raw_img_path,
                         aligned_face_path,
                         face_landmarks,
