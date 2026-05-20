@@ -15,7 +15,7 @@ from ._typing import (
     Size,
     TriangleList,
 )
-from .video_utils import video_writer_context
+from .morph_video import video_writer_context
 
 _CV2 = cast("Any", cv2)
 _NP = cast("Any", np)

@@ -18,8 +18,8 @@ from pathlib import Path
 import PIL.Image
 
 from ._typing import FloatPoint, PathInput, Point
-from .face_alignment_geometry import calculate_alignment_quad
-from .face_alignment_image import prepare_alignment_canvas, warp_aligned_face
+from .prep_alignment_geometry import calculate_alignment_quad
+from .prep_alignment_image import prepare_alignment_canvas, warp_aligned_face
 
 logger = logging.getLogger(__name__)
 

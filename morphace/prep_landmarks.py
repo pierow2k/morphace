@@ -19,7 +19,7 @@ from typing import Any
 import dlib
 
 from ._typing import LandmarkList, PathInput
-from .face_landmark_detection import NoFaceFoundError
+from .morph_landmark_detection import NoFaceFoundError
 
 logger = logging.getLogger(__name__)
 

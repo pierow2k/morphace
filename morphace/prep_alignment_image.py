@@ -13,7 +13,7 @@ import numpy as np
 import PIL.Image
 import scipy.ndimage
 
-from .face_alignment_geometry import AlignmentQuad
+from .prep_alignment_geometry import AlignmentQuad
 
 logger = logging.getLogger(__name__)
 _SCIPY_NDIMAGE = cast("Any", scipy.ndimage)
