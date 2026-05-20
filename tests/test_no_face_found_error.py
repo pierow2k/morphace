@@ -17,10 +17,7 @@ def _empty_detector(image: Any, upsample_num_times: int) -> list[Any]:
 
 def test_public_no_face_found_error_is_landmark_error() -> None:
     """Verify the package root re-exports the landmark exception."""
-    assert (
-        morphace.NoFaceFoundError
-        is face_landmark_detection.NoFaceFoundError
-    )
+    assert morphace.NoFaceFoundError is face_landmark_detection.NoFaceFoundError
 
 
 def test_prep_no_face_found_error_is_landmark_error() -> None:
