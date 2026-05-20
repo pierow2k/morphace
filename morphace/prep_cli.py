@@ -41,6 +41,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
     )
     parser.add_argument(
+        "--overwrite",
+        default=False,
+        help="Overwrite existing aligned images",
+        action="store_true",
+    )
+    parser.add_argument(
         "--em-scale",
         default=0.1,
         help="Scaling factor for eye-mouth distance",
@@ -95,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
         use_alpha=args.use_alpha,
     )
 
-    align_faces(config)
+    align_faces(config, overwrite=args.overwrite)
     return 0
 
 
