@@ -1,4 +1,7 @@
-"""Orchestration logic for aligning faces and producing cropped images."""
+"""Align faces and producing cropped images from a directory of raw images.
+
+Defers to `image_align` to align and crop faces for each image file.
+"""
 
 # pylint: disable=broad-exception-caught
 
