@@ -53,7 +53,6 @@ def main() -> None:
     )
     parser.add_argument(
         "--output",
-        required=True,
         default="morph.mp4",
         help="Path to save the output video (default: %(default)s)",
     )
