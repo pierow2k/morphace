@@ -1,4 +1,14 @@
-"""Command-line interface for face morphing."""
+"""Command-line interface for the morphace application.
+
+Parses command-line arguments, validates inputs, and delegates
+to the morphace workflow to generate a face morphing video.
+
+Usage:
+    morphace <image1> <image2> [options]
+
+Example:
+    morphace source1.jpg source2.jpg --output morph.mp4 --duration 5
+"""
 
 import argparse
 import logging
@@ -23,10 +33,12 @@ def main() -> None:
         description="Generate a face morphing video."
     )
     parser.add_argument(
-        "--img1", required=True, help="Path to the first source image"
+        "img1",
+        help="Path to the first image",
     )
     parser.add_argument(
-        "--img2", required=True, help="Path to the second source image"
+        "img2",
+        help="Path to the second image",
     )
     parser.add_argument(
         "--landmark-model",
@@ -51,21 +63,21 @@ def main() -> None:
         help="Duration of the morph in seconds (default: %(default)s)",
     )
     parser.add_argument(
-        "--frame",
+        "--fps",
         type=int,
-        default=20,
+        default=30,
         help="Frame rate (FPS) (default: %(default)s)",
     )
     parser.add_argument(
-        "--show-triangles",
-        action="store_true",  # Use store_true for simple boolean flags
+        "--show-mesh",
+        action="store_true",
         default=False,
-        help="Show triangulation lines in the video",
+        help="Show triangulation mesh in the video",
     )
     args = parser.parse_args()
 
     # Input validation
-    if args.duration <= 0 or args.frame <= 0:
+    if args.duration <= 0 or args.fps <= 0:
         logger.error("Duration and frame rate must be positive integers.")
         sys.exit(1)
 
@@ -82,23 +94,23 @@ def main() -> None:
     try:
         landmark_model_path = resolve_landmark_model_path(args.landmark_model)
     except LandmarkModelNotFoundError as error:
+        # Intentionally use error() to avoid a scary stack trace for a user
+        # input issue. We suppress the linter warning because we don't need
+        # a traceback here.
         logger.error("%s", error)  # noqa: TRY400
         sys.exit(1)
 
     config = MorphConfig(
         duration=args.duration,
-        frame_rate=args.frame,
+        frame_rate=args.fps,
         output=args.output,
         landmark_model_path=landmark_model_path,
     )
 
     try:
-        morph_faces(image1, image2, config, args.show_triangles)
+        morph_faces(image1, image2, config, args.show_mesh)
         logger.info("Morphing complete. Video saved to %s", args.output)
     except NoFaceFoundError:
-        # Intentionally use error() to avoid a scary stack trace for a user
-        # input issue. We suppress the linter warning because we don't need
-        # a traceback here.
         logger.error(  # noqa: TRY400
             "Error: Could not detect a face in one or both images."
         )
