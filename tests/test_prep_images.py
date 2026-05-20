@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from face_morphing import prep_images
-from face_morphing.prep_face_alignment import AlignmentOptions
+from morphace import prep_images
+from morphace.prep_face_alignment import AlignmentOptions
 
 
 def test_align_faces_uses_shared_model_helpers(

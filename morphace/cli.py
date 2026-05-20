@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    """CLI for face-morphing."""
+    """CLI for morphace."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     parser = argparse.ArgumentParser(
@@ -34,7 +34,7 @@ def main() -> None:
         default=None,
         help=(
             "Path to shape_predictor_68_face_landmarks.dat. "
-            "If omitted, the app checks FACE_MORPHING_LANDMARK_MODEL "
+            "If omitted, the app checks MORPHACE_LANDMARK_MODEL "
             "and then the default user data directory."
         ),
     )
