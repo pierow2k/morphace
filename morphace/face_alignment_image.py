@@ -78,6 +78,7 @@ def prepare_alignment_canvas(
         coordinate space.
     """
     image, quad, crop_size = _shrink_image(image, quad, crop_size, options)
+    # Add a 10% border around the crop (minimum 3 pixels) for context.
     border = max(int(np.rint(crop_size * 0.1)), 3)
     image, quad = _crop_image(image, quad, border)
     return _extend_image_canvas(image, quad, crop_size, border, options)
@@ -147,8 +148,8 @@ def _crop_image(
     # Ensure quad is a NumPy array so coordinate slicing is predictable.
     quad = np.asarray(quad)
 
-    # Calculate the quad bounding box with float precision before rounding to
-    # pixel coordinates.
+    # Calculate the bounding box of the quad, using floor/ceil to tightly
+    # encompass the face geometry before converting to integer pixel coords.
     left = int(np.floor(np.min(quad[:, 0])))
     top = int(np.floor(np.min(quad[:, 1])))
     right = int(np.ceil(np.max(quad[:, 0])))
@@ -182,9 +183,9 @@ def _compute_blend_gradient(
     """Compute a distance-based gradient map for padded-region blending.
 
     Values are based on the normalized distance to the nearest padding
-    boundary. Pixels in the original image region have values >= 1.0, while
-    pixels in padded regions have values < 1.0 and approach 0.0 at the
-    outermost edges.
+    boundary. Pixels in the original image region have negative values,
+    while pixels in padded regions approach 1.0 at the outermost edges
+    and fall to 0.0 at the padding boundary.
 
     Args:
         image_array: Image array with shape ``(height, width, channels)``.
@@ -254,8 +255,8 @@ def _extend_image_canvas(
     if not options.enable_padding or max(padding) < 1:
         return image, quad
 
-    # Enforce a minimum padding size so blur and median-color blending have
-    # enough room to hide reflection seams.
+    # Enforce a minimum padding size on all sides so blur and median-color
+    # blending have enough room to hide reflection seams.
     min_pad = int(np.rint(crop_size * _MIN_PAD_SCALE))
     padding = np.maximum(padding, min_pad)
 
@@ -267,7 +268,7 @@ def _extend_image_canvas(
         "reflect",
     )
 
-    # Generate a map that is strongest near the padded image edges.
+    # Generate a map that is strongest (1.0) near the padded image edges.
     mask = _compute_blend_gradient(image_array, padding)
     blur = crop_size * _BLUR_SCALE
 
@@ -289,8 +290,8 @@ def _extend_image_canvas(
     image_array = np.clip(np.rint(image_array), 0, 255).astype(np.uint8)
 
     if options.alpha:
-        # Optional alpha follows the padding mask so callers can distinguish
-        # synthesized border regions from original image content.
+        # Optional alpha channel is opaque for the original image and fades to
+        # transparent at the outermost padded edges.
         alpha_mask = 1 - np.clip(_EDGE_BLEND_THRESHOLD * mask, 0.0, 1.0)
         alpha_mask = np.clip(np.rint(alpha_mask * 255), 0, 255).astype(np.uint8)
         image_array = np.concatenate(
