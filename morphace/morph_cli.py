@@ -18,9 +18,9 @@ from pathlib import Path
 
 import cv2
 
+from ._dlib_utils import NoFaceFoundError
 from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
 from .morph_config import MorphConfig
-from .morph_landmark_detection import NoFaceFoundError
 from .morph_workflow import morph_faces
 
 logger = logging.getLogger(__name__)

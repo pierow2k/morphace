@@ -1,7 +1,7 @@
 """Module for performing image warping and morphing between two faces."""
 
 from collections.abc import Sequence
-from typing import Any, cast
+from typing import Any
 
 import cv2
 import numpy as np
@@ -17,8 +17,8 @@ from ._typing import (
 )
 from .morph_video import video_writer_context
 
-_CV2 = cast("Any", cv2)
-_NP = cast("Any", np)
+_CV2: Any = cv2
+_NP: Any = np
 TrianglePoints = tuple[
     np.ndarray | list[FloatPoint],
     np.ndarray | list[FloatPoint],

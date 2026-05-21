@@ -11,17 +11,16 @@ Exceptions:
     NoFaceFoundError: Raised when an image contains no detectable faces.
 """
 
-import logging
 import pathlib
 from collections.abc import Iterator
 from typing import Any
 
 import dlib
 
+from ._dlib_utils import NoFaceFoundError, _detect_all_landmarks
 from ._typing import LandmarkList, PathInput
-from .morph_landmark_detection import NoFaceFoundError
 
-logger = logging.getLogger(__name__)
+__all__ = ["NoFaceFoundError", "get_landmarks"]
 
 
 def get_landmarks(
@@ -47,13 +46,4 @@ def get_landmarks(
     img_path = pathlib.Path(image).expanduser().resolve()
     img = dlib.load_rgb_image(str(img_path))
 
-    detections = detector(img, 1)
-
-    if len(detections) == 0:
-        logger.error("Unable to find a face in the image.")
-        raise NoFaceFoundError("Unable to find a face in the image.")
-
-    for detection in detections:
-        shape = predictor(img, detection)
-        face_landmarks = [(p.x, p.y) for p in shape.parts()]
-        yield face_landmarks
+    yield from _detect_all_landmarks(img, detector, predictor)

@@ -1,12 +1,12 @@
 """Module for detecting facial landmarks and aligning images for morphing."""
 
-import logging
 from typing import Any
 
 import cv2
 import dlib
 import numpy as np
 
+from ._dlib_utils import NoFaceFoundError, _detect_all_landmarks
 from ._typing import (
     FaceCorrespondences,
     ImageArray,
@@ -15,11 +15,7 @@ from ._typing import (
     Size,
 )
 
-logger = logging.getLogger(__name__)
-
-
-class NoFaceFoundError(Exception):
-    """Raised when there is no face found."""
+__all__ = ["NoFaceFoundError", "align_faces"]
 
 
 def _center_crop(img: ImageArray, target_h: int, target_w: int) -> ImageArray:
@@ -135,22 +131,12 @@ def align_faces(
     for img, out_list in zip(
         [img1_cropped, img2_cropped], [list1, list2], strict=True
     ):
-        detections = detector(img, 1)
-
-        if len(detections) == 0:
-            logger.error("Unable to find a face in the image.")
-            raise NoFaceFoundError("Unable to find a face in the image.")
-
-        # Only process the PRIMARY face (first detection). Processing
-        # multiple faces would break the point correspondence math.
-        rect = detections[0]
-
-        shape = predictor(img, rect)
+        # Only process the primary face. Processing multiple faces would
+        # break the point correspondence math.
+        face_points = next(_detect_all_landmarks(img, detector, predictor))
 
         # Extract landmarks
-        for i in range(68):
-            x = shape.part(i).x
-            y = shape.part(i).y
+        for i, (x, y) in enumerate(face_points):
             out_list.append((x, y))
             corresp[i][0] += x
             corresp[i][1] += y
