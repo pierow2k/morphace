@@ -1,7 +1,6 @@
 """Module for performing image warping and morphing between two faces."""
 
 from collections.abc import Sequence
-from typing import Any
 
 import cv2
 import numpy as np
@@ -17,8 +16,6 @@ from ._typing import (
 )
 from .morph_video import video_writer_context
 
-_CV2: Any = cv2
-_NP: Any = np
 TrianglePoints = tuple[
     np.ndarray | list[FloatPoint],
     np.ndarray | list[FloatPoint],
@@ -47,20 +44,20 @@ def _apply_affine_transform(
         The warped image patch.
     """
     # Ensure inputs are float32 arrays for OpenCV
-    src_tri_arr = _NP.asarray(src_tri, dtype=_NP.float32)
-    dst_tri_arr = _NP.asarray(dst_tri, dtype=_NP.float32)
+    src_tri_arr = np.asarray(src_tri, dtype=np.float32)
+    dst_tri_arr = np.asarray(dst_tri, dtype=np.float32)
 
     # Given a pair of triangles, find the affine transform.
-    warp_mat = _CV2.getAffineTransform(src_tri_arr, dst_tri_arr)
+    warp_mat = cv2.getAffineTransform(src_tri_arr, dst_tri_arr)
 
     # Apply the Affine Transform
-    return _CV2.warpAffine(
+    return cv2.warpAffine(
         src,
         warp_mat,
         (size[0], size[1]),
         None,
-        flags=_CV2.INTER_LINEAR,
-        borderMode=_CV2.BORDER_REFLECT_101,
+        flags=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_REFLECT_101,
     )
 
 
@@ -83,9 +80,9 @@ def _morph_triangle(
     tri_src1, tri_src2, tri_dest = triangles
 
     # Find bounding rectangles for each triangle
-    rect_src1 = _CV2.boundingRect(_NP.float32([tri_src1]))
-    rect_src2 = _CV2.boundingRect(_NP.float32([tri_src2]))
-    rect_dest = _CV2.boundingRect(_NP.float32([tri_dest]))
+    rect_src1 = cv2.boundingRect(np.asarray([tri_src1], dtype=np.float32))
+    rect_src2 = cv2.boundingRect(np.asarray([tri_src2], dtype=np.float32))
+    rect_dest = cv2.boundingRect(np.asarray([tri_dest], dtype=np.float32))
 
     # Calculate offset points relative to top-left corner of bounding
     # rectangles using list comprehensions for brevity and readability.
@@ -117,7 +114,13 @@ def _morph_triangle(
         fill_color = tuple([1.0] * img.shape[2])
 
     mask = np.zeros(mask_shape, dtype=np.float32)
-    _CV2.fillConvexPoly(mask, _NP.int32([tri_dest_offset]), fill_color, 16, 0)
+    cv2.fillConvexPoly(
+        mask,
+        np.asarray([tri_dest_offset], dtype=np.int32),
+        fill_color,
+        16,
+        0,
+    )
 
     # Crop source image patches
     img1_rect = img1[
@@ -180,7 +183,7 @@ def generate_morph_frame(  # noqa: PLR0913
     points_arr = (1 - alpha) * p1_arr + alpha * p2_arr
 
     # Allocate space for final output
-    morphed_frame = _NP.zeros(img1.shape, dtype=_NP.float32)
+    morphed_frame = np.zeros(img1.shape, dtype=np.float32)
 
     for i in range(len(tri_list)):
         x, y, z = map(int, tri_list[i])
@@ -193,10 +196,10 @@ def generate_morph_frame(  # noqa: PLR0913
         _morph_triangle(img1, img2, morphed_frame, (t1, t2, t), alpha)
 
         if show_triangles:
-            pts = t.reshape((-1, 1, 2)).astype(_NP.int32)
-            _CV2.polylines(morphed_frame, [pts], True, (255, 255, 255), 1)
+            pts = t.reshape((-1, 1, 2)).astype(np.int32)
+            cv2.polylines(morphed_frame, [pts], True, (255, 255, 255), 1)
 
-    return _NP.clip(morphed_frame, 0, 255)
+    return np.clip(morphed_frame, 0, 255)
 
 
 def generate_morph_sequence(
@@ -211,10 +214,10 @@ def generate_morph_sequence(
     points1, points2 = points_pair
 
     # Pre-processing
-    img1_float = _NP.float32(img1)
-    img2_float = _NP.float32(img2)
-    p1_arr = _NP.array(points1, dtype=_NP.float32)
-    p2_arr = _NP.array(points2, dtype=_NP.float32)
+    img1_float = np.asarray(img1, dtype=np.float32)
+    img2_float = np.asarray(img2, dtype=np.float32)
+    p1_arr = np.array(points1, dtype=np.float32)
+    p2_arr = np.array(points2, dtype=np.float32)
 
     with video_writer_context(video_config) as (stdin, num_images):
         for j in range(num_images):
@@ -233,6 +236,9 @@ def generate_morph_sequence(
 
             # Conversion and writing
             res = Image.fromarray(
-                _CV2.cvtColor(_NP.uint8(frame), _CV2.COLOR_BGR2RGB)
+                cv2.cvtColor(
+                    np.asarray(frame, dtype=np.uint8),
+                    cv2.COLOR_BGR2RGB,
+                )
             )
             res.save(stdin, "JPEG")
