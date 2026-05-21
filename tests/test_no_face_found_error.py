@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import morphace
-from morphace import morph_landmark_detection, prep_landmarks
+from morphace import _dlib_utils, morph_landmark_detection, prep_landmarks
 
 
 def _empty_detector(image: Any, upsample_num_times: int) -> list[Any]:
@@ -17,6 +17,7 @@ def _empty_detector(image: Any, upsample_num_times: int) -> list[Any]:
 
 def test_public_no_face_found_error_is_landmark_error() -> None:
     """Verify the package root re-exports the landmark exception."""
+    assert morphace.NoFaceFoundError is _dlib_utils.NoFaceFoundError
     assert (
         morphace.NoFaceFoundError is morph_landmark_detection.NoFaceFoundError
     )

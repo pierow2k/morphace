@@ -7,7 +7,7 @@ output image.
 """
 
 import logging
-from typing import Any, Protocol, cast
+from typing import Any, Protocol
 
 import numpy as np
 import PIL.Image
@@ -16,7 +16,7 @@ import scipy.ndimage
 from .prep_alignment_geometry import AlignmentQuad
 
 logger = logging.getLogger(__name__)
-_SCIPY_NDIMAGE = cast("Any", scipy.ndimage)
+_SCIPY_NDIMAGE: Any = scipy.ndimage
 
 
 class ImageAlignmentOptions(Protocol):
