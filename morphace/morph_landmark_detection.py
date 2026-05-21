@@ -135,15 +135,15 @@ def align_faces(
     for img, out_list in zip(
         [img1_cropped, img2_cropped], [list1, list2], strict=True
     ):
-        dets = detector(img, 1)
+        detections = detector(img, 1)
 
-        if len(dets) == 0:
+        if len(detections) == 0:
             logger.error("Unable to find a face in the image.")
             raise NoFaceFoundError("Unable to find a face in the image.")
 
         # Only process the PRIMARY face (first detection). Processing
         # multiple faces would break the point correspondence math.
-        rect = dets[0]
+        rect = detections[0]
 
         shape = predictor(img, rect)
 
