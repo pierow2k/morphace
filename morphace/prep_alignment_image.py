@@ -7,7 +7,7 @@ output image.
 """
 
 import logging
-from typing import Any, Protocol
+from typing import Protocol
 
 import numpy as np
 import PIL.Image
@@ -16,7 +16,6 @@ import scipy.ndimage
 from .prep_alignment_geometry import AlignmentQuad
 
 logger = logging.getLogger(__name__)
-_SCIPY_NDIMAGE: Any = scipy.ndimage
 
 
 class ImageAlignmentOptions(Protocol):
@@ -273,7 +272,7 @@ def _extend_image_canvas(
     blur = crop_size * _BLUR_SCALE
 
     # Blend with a blurred version to smooth reflection artifacts.
-    blurred = _SCIPY_NDIMAGE.gaussian_filter(image_array, [blur, blur, 0])
+    blurred = scipy.ndimage.gaussian_filter(image_array, [blur, blur, 0])
     blend_mask_blur = np.clip(
         mask * _EDGE_BLEND_THRESHOLD + _SOLID_BLEND_THRESHOLD,
         0.0,
