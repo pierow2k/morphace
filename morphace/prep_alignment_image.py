@@ -54,35 +54,6 @@ _EDGE_BLEND_THRESHOLD = 3.0
 _SOLID_BLEND_THRESHOLD = 1.0
 
 
-def prepare_alignment_canvas(
-    image: PIL.Image.Image,
-    quad: AlignmentQuad,
-    crop_size: float,
-    options: ImageAlignmentOptions,
-) -> tuple[PIL.Image.Image, AlignmentQuad]:
-    """Prepare an image and quad for the final alignment warp.
-
-    This groups the pre-warp image operations that must stay in sequence:
-    shrink oversized inputs, crop to the useful region around the face, then
-    extend the canvas if the requested crop reaches beyond the source image.
-
-    Args:
-        image: Source image to shrink, crop, and pad as needed.
-        quad: Alignment quad in source image coordinates.
-        crop_size: Scalar square crop size.
-        options: Configuration for output sizing and padding.
-
-    Returns:
-        The prepared image and quad adjusted to the prepared image's
-        coordinate space.
-    """
-    image, quad, crop_size = _shrink_image(image, quad, crop_size, options)
-    # Add a 10% border around the crop (minimum 3 pixels) for context.
-    border = max(int(np.rint(crop_size * 0.1)), 3)
-    image, quad = _crop_image(image, quad, border)
-    return _extend_image_canvas(image, quad, crop_size, border, options)
-
-
 def _shrink_image(
     image: PIL.Image.Image,
     crop_corners: AlignmentQuad,
@@ -305,6 +276,35 @@ def _extend_image_canvas(
     quad += padding[:2]
 
     return image, quad
+
+
+def prepare_alignment_canvas(
+    image: PIL.Image.Image,
+    quad: AlignmentQuad,
+    crop_size: float,
+    options: ImageAlignmentOptions,
+) -> tuple[PIL.Image.Image, AlignmentQuad]:
+    """Prepare an image and quad for the final alignment warp.
+
+    This groups the pre-warp image operations that must stay in sequence:
+    shrink oversized inputs, crop to the useful region around the face, then
+    extend the canvas if the requested crop reaches beyond the source image.
+
+    Args:
+        image: Source image to shrink, crop, and pad as needed.
+        quad: Alignment quad in source image coordinates.
+        crop_size: Scalar square crop size.
+        options: Configuration for output sizing and padding.
+
+    Returns:
+        The prepared image and quad adjusted to the prepared image's
+        coordinate space.
+    """
+    image, quad, crop_size = _shrink_image(image, quad, crop_size, options)
+    # Add a 10% border around the crop (minimum 3 pixels) for context.
+    border = max(int(np.rint(crop_size * 0.1)), 3)
+    image, quad = _crop_image(image, quad, border)
+    return _extend_image_canvas(image, quad, crop_size, border, options)
 
 
 def warp_aligned_face(
