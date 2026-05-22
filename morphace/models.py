@@ -57,6 +57,16 @@ def default_landmark_model_path() -> Path:
     )
 
 
+def _require_file(path: Path, source: str) -> Path:
+    """Return path if it exists, otherwise raise a helpful error."""
+    if not path.is_file():
+        raise LandmarkModelNotFoundError(
+            f"{source} does not point to an existing file: {path}"
+        )
+
+    return path
+
+
 def resolve_landmark_model_path(model_path: str | Path | None = None) -> Path:
     """Resolve the dlib landmark model path.
 
@@ -91,13 +101,3 @@ def resolve_landmark_model_path(model_path: str | Path | None = None) -> Path:
         f"Pass --landmark-model /path/to/{MODEL_FILENAME}, set "
         f"{MODEL_ENV_VAR}, or place the file at {default_path}."
     )
-
-
-def _require_file(path: Path, source: str) -> Path:
-    """Return path if it exists, otherwise raise a helpful error."""
-    if not path.is_file():
-        raise LandmarkModelNotFoundError(
-            f"{source} does not point to an existing file: {path}"
-        )
-
-    return path
