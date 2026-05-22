@@ -16,6 +16,7 @@ from ._typing import (
 )
 
 __all__ = ["NoFaceFoundError", "align_faces"]
+_EXPECTED_LANDMARK_COUNT = 68
 
 
 def _center_crop(img: ImageArray, target_h: int, target_w: int) -> ImageArray:
@@ -120,7 +121,7 @@ def align_faces(
     # Initialize storage
     list1: LandmarkList = []
     list2: LandmarkList = []
-    corresp = np.zeros((68, 2))
+    corresp = np.zeros((_EXPECTED_LANDMARK_COUNT, 2))
 
     # Image size is guaranteed identical by _crop_image.
     h, w = img1_cropped.shape[:2]
