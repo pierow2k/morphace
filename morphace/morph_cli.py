@@ -72,7 +72,7 @@ def main() -> None:
         "--show-mesh",
         action="store_true",
         default=False,
-        help="Show triangulation mesh in the video",
+        help="Show the triangle mesh overlay in the output video.",
     )
     parser.add_argument(
         "--version",
