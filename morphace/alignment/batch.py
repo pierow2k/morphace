@@ -93,7 +93,7 @@ def _align_detected_faces(
 
 
 def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
-    """Produce aligned face crops from raw images.
+    """Produce aligned face crops from a directory containing raw images.
 
     Args:
         config: Pipeline configuration options.
