@@ -4,6 +4,7 @@ Orchestrates the complete face morphing pipeline by coordinating
 face alignment, Delaunay triangulation, and sequence generation.
 """
 
+import logging
 from pathlib import Path
 
 from morphace._typing import ImageArray
@@ -13,6 +14,8 @@ from .config import MorphConfig, MorphVideoConfig
 from .correspondence import align_faces
 from .frames import generate_morph_sequence
 from .triangulation import compute_delaunay_triangles
+
+logger = logging.getLogger(__name__)
 
 
 def morph_faces(
@@ -35,6 +38,8 @@ def morph_faces(
     detector = get_detector()
     predictor = get_predictor(config.landmark_model_path)
 
+    logger.info("Identifying facial feature correspondences...")
+
     correspondences = align_faces(
         img1,
         img2,
@@ -42,11 +47,15 @@ def morph_faces(
         predictor,
     )
 
+    logger.info("Generating mesh...")
+
     triangles = compute_delaunay_triangles(
         correspondences.size[1],
         correspondences.size[0],
         correspondences.average_landmarks,
     )
+
+    logger.info("Generating video...")
 
     generate_morph_sequence(
         (correspondences.image1, correspondences.image2),
