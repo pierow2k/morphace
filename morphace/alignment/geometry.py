@@ -126,9 +126,7 @@ def calculate_alignment_quad(
     # vector with a rotated face-axis vector stabilizes the crop against head
     # rotation (roll). The result is a diagonal vector whose direction blends
     # horizontal (eye-line) and vertical (face-axis) information.
-    crop_vec_x = features.eye_line_vec - _rotate_90_ccw(
-        features.face_axis_vec
-    )
+    crop_vec_x = features.eye_line_vec - _rotate_90_ccw(features.face_axis_vec)
 
     # Normalize the vector before applying face-size scaling.
     x_norm = np.hypot(*crop_vec_x)
