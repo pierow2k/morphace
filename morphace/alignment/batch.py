@@ -17,6 +17,9 @@ from morphace.landmarks import get_detector, get_landmarks, get_predictor
 from .face import align_face_image
 from .options import FaceAlignmentOptions
 
+# Suffixes for common image formats
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
+
 logger = logging.getLogger(__name__)
 
 
@@ -95,9 +98,12 @@ def _align_detected_faces(
 def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
     """Produce aligned face crops from raw images.
 
-    Writes one aligned image per detected face to `config.aligned_dir`. Existing
-    outputs are skipped unless `overwrite` is true. Detection and alignment
-    failures for individual images are logged and do not stop the whole run.
+    Writes one aligned image per detected face to `config.aligned_dir`,
+    creating the directory if it does not exist. Only immediate children of
+    `config.raw_dir` with recognized image extensions are processed;
+    subdirectories are ignored. Existing outputs are skipped unless
+    `overwrite` is true. Detection and alignment failures for individual
+    images are logged and do not stop the whole run.
 
     Args:
         config: Pipeline configuration options.
@@ -106,7 +112,16 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
     detector = get_detector()
     predictor = get_predictor(config.landmark_model_path)
 
+    # If AlignmentConfig.aligned_dir does not exist, create it.
+    config.aligned_dir.mkdir(parents=True, exist_ok=True)
+
     for raw_img_path in config.raw_dir.iterdir():
+        # Skip directories and non-image files
+        if (
+            not raw_img_path.is_file()
+            or raw_img_path.suffix.lower() not in IMAGE_EXTENSIONS
+        ):
+            continue
         logger.info("Aligning %s ...", raw_img_path.name)
         try:
             if _should_skip_existing(config, raw_img_path, overwrite):

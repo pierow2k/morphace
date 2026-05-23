@@ -29,17 +29,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "raw_dir", help="Directory with raw images for face alignment"
     )
     parser.add_argument(
-        "aligned_dir", help="Directory for storing aligned images"
+        "aligned_dir",
+        nargs="?",
+        default=argparse.SUPPRESS,
+        help="Directory for storing aligned images (default: raw_dir/cropped)",
     )
     parser.add_argument(
         "--landmark-model",
         type=Path,
         default=None,
-        help=(
-            "Path to shape_predictor_68_face_landmarks.dat. "
-            "If omitted, the app checks MORPHACE_LANDMARK_MODEL "
-            "and then the default user data directory."
-        ),
+        help=("Path to shape_predictor_68_face_landmarks.dat."),
     )
     parser.add_argument(
         "--output-size",
@@ -88,6 +87,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     args = parse_args(argv)
+
+    if not hasattr(args, "aligned_dir"):
+        args.aligned_dir = Path(args.raw_dir) / "cropped"
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
