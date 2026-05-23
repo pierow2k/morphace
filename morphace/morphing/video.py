@@ -30,6 +30,9 @@ def video_writer_context(
     process = Popen(
         [
             "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "warning",
             "-y",
             "-f",
             "image2pipe",
