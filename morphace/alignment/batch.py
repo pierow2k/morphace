@@ -1,8 +1,8 @@
-"""Align faces and producing cropped images from a directory of raw images.
+"""Align faces and produce cropped images from a directory of raw images.
 
-Detects each face in a given image, defers to `align_face_image` to align and
-crop the face, and saves the result in the output directory with the face
-number appended to the filename.
+Detects each face in each source image, delegates to `align_face_image` to
+align and crop the face, and saves the result in the output directory with
+the face number appended to the filename.
 """
 
 # pylint: disable=broad-exception-caught
@@ -53,7 +53,7 @@ def _should_skip_existing(
     raw_img_path: Path,
     overwrite: bool,
 ) -> bool:
-    """Return whether an image should be skipped because output exists."""
+    """Return whether to skip an image because its first output exists."""
     first_face_path = _aligned_face_path(config, raw_img_path, 1)
     if first_face_path.is_file() and not overwrite:
         logger.info("skipping existing file %s", first_face_path.name)
@@ -68,7 +68,7 @@ def _align_detected_faces(
     detector: Any,
     predictor: Any,
 ) -> None:
-    """Align every detected face for one source image."""
+    """Align and crop every detected face for one source image."""
     logger.info("Getting landmarks...")
     for index, face_landmarks in enumerate(
         get_landmarks(
@@ -93,7 +93,11 @@ def _align_detected_faces(
 
 
 def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
-    """Produce aligned face crops from a directory containing raw images.
+    """Produce aligned face crops from raw images.
+
+    Writes one aligned image per detected face to `config.aligned_dir`. Existing
+    outputs are skipped unless `overwrite` is true. Detection and alignment
+    failures for individual images are logged and do not stop the whole run.
 
     Args:
         config: Pipeline configuration options.
