@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from os import PathLike
 from typing import Any
 
-import numpy as np
+from numpy.typing import NDArray
 
 class point:
     x: int
@@ -16,14 +16,14 @@ class full_object_detection:
 
 class frontal_face_detector:
     def __call__(
-        self, image: np.ndarray[Any, Any], upsample_num_times: int = ...
+        self, image: NDArray[Any], upsample_num_times: int = ...
     ) -> Sequence[rectangle]: ...
 
 class shape_predictor:
     def __init__(self, predictor_model_path: str) -> None: ...
     def __call__(
-        self, image: np.ndarray[Any, Any], box: rectangle
+        self, image: NDArray[Any], box: rectangle
     ) -> full_object_detection: ...
 
 def get_frontal_face_detector() -> frontal_face_detector: ...
-def load_rgb_image(path: str | PathLike[str]) -> np.ndarray[Any, Any]: ...
+def load_rgb_image(path: str | PathLike[str]) -> NDArray[Any]: ...
