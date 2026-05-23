@@ -4,11 +4,11 @@ import numpy as np
 import PIL.Image
 import pytest
 
-from morphace.prep_alignment_image import (
+from morphace.alignment import FaceAlignmentOptions
+from morphace.alignment.image import (
     prepare_alignment_canvas,
     warp_aligned_face,
 )
-from morphace.prep_face_alignment import FaceAlignmentOptions
 
 
 def test_prepare_alignment_canvas_noops_for_full_image_quad() -> None:
@@ -47,6 +47,37 @@ def test_prepare_alignment_canvas_respects_padding_disabled() -> None:
 
     assert prepared_image.size == (45, 45)
     np.testing.assert_array_equal(prepared_quad, quad)
+
+
+@pytest.mark.parametrize(("alpha", "mode"), [(False, "RGB"), (True, "RGBA")])
+def test_prepare_alignment_canvas_pads_with_requested_alpha_mode(
+    alpha: bool,
+    mode: str,
+) -> None:
+    """Verify padded canvases use RGB or RGBA output as requested."""
+    image = PIL.Image.new("RGB", (64, 64), color=(10, 20, 30))
+    quad = np.array(
+        [[-10.0, -10.0], [-10.0, 40.0], [40.0, 40.0], [40.0, -10.0]]
+    )
+    original_quad = quad.copy()
+
+    prepared_image, prepared_quad = prepare_alignment_canvas(
+        image,
+        quad,
+        50.0,
+        FaceAlignmentOptions(
+            output_size=64,
+            transform_size=64,
+            alpha=alpha,
+        ),
+    )
+
+    assert prepared_image.mode == mode
+    assert prepared_image.size == (75, 75)
+    np.testing.assert_array_equal(
+        prepared_quad,
+        original_quad + np.array([15, 15]),
+    )
 
 
 def test_warp_aligned_face_rejects_invalid_quad_shape() -> None:

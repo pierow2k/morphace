@@ -18,8 +18,8 @@ dependencies = [
 ]
 
 [project.scripts]
-morphace = "morphace.morph_cli:main"
-morphace-prep = "morphace.prep_cli:main"
+morphace = "morphace.cli.morph:main"
+morphace-prep = "morphace.cli.prep:main"
 
 
 [dependency-groups]

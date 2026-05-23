@@ -20,11 +20,3 @@ type PathInput = str | PathLike[str]
 
 type ImagePair = tuple[ImageArray, ImageArray]
 type ImageShape = tuple[int, ...]
-type FaceCorrespondences = tuple[
-    Size,
-    ImageArray,
-    ImageArray,
-    LandmarkList,
-    LandmarkList,
-    LandmarkArray,
-]

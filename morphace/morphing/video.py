@@ -5,17 +5,17 @@ from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from typing import IO
 
-from ._typing import Size
+from .config import MorphVideoConfig
 
 
 @contextmanager
 def video_writer_context(
-    config: tuple[int, int, Size, str],
+    config: MorphVideoConfig,
 ) -> Iterator[tuple[IO[bytes], int]]:
     """Context manager to handle the FFmpeg process lifecycle.
 
     Args:
-        config: A tuple of (duration, frame_rate, size, output_path).
+        config: Video stream configuration.
 
     Yields:
         A tuple containing (stdin_stream, num_frames).
@@ -23,9 +23,8 @@ def video_writer_context(
     Raises:
         RuntimeError: If FFmpeg fails to start or closes unexpectedly.
     """
-    duration, frame_rate, size, output = config
-    width, height = size
-    num_images = max(int(duration * frame_rate), 1)
+    width, height = config.size
+    num_images = max(int(config.duration * config.frame_rate), 1)
     size_str = f"{width}x{height}"
 
     process = Popen(
@@ -35,7 +34,7 @@ def video_writer_context(
             "-f",
             "image2pipe",
             "-r",
-            str(frame_rate),
+            str(config.frame_rate),
             "-s",
             size_str,
             "-i",
@@ -48,7 +47,7 @@ def video_writer_context(
             "scale=trunc(iw/2)*2:trunc(ih/2)*2",
             "-pix_fmt",
             "yuv420p",
-            output,
+            config.output,
         ],
         stdin=PIPE,
     )

@@ -5,8 +5,7 @@ from typing import Any
 
 import pytest
 
-from morphace import prep_images
-from morphace.prep_face_alignment import FaceAlignmentOptions
+from morphace.alignment import FaceAlignmentOptions, batch
 
 
 def test_align_faces_uses_shared_model_helpers(
@@ -59,17 +58,17 @@ def test_align_faces_uses_shared_model_helpers(
             options,
         )
 
-    monkeypatch.setattr(prep_images, "get_detector", fake_get_detector)
-    monkeypatch.setattr(prep_images, "get_predictor", fake_get_predictor)
-    monkeypatch.setattr(prep_images, "get_landmarks", fake_get_landmarks)
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
+    monkeypatch.setattr(batch, "get_landmarks", fake_get_landmarks)
     monkeypatch.setattr(
-        prep_images,
+        batch,
         "align_face_image",
         fake_align_face_image,
     )
 
-    prep_images.align_faces(
-        prep_images.AlignmentConfig(
+    batch.align_faces(
+        batch.AlignmentConfig(
             raw_dir=raw_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
@@ -104,10 +103,55 @@ def test_alignment_config_uses_default_face_alignment_options(
     tmp_path: Path,
 ) -> None:
     """Verify image prep defaults to standard face alignment options."""
-    config = prep_images.AlignmentConfig(
+    config = batch.AlignmentConfig(
         raw_dir=tmp_path / "raw",
         aligned_dir=tmp_path / "aligned",
         landmark_model_path=Path("resolved_model.dat"),
     )
 
     assert config.face_alignment == FaceAlignmentOptions()
+
+
+def test_align_faces_skips_existing_output_without_overwrite(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify existing first-face output skips landmark detection."""
+    raw_dir = tmp_path / "raw"
+    aligned_dir = tmp_path / "aligned"
+    raw_dir.mkdir()
+    aligned_dir.mkdir()
+    raw_img_path = raw_dir / "face.png"
+    raw_img_path.write_bytes(b"not a real image")
+    (aligned_dir / "face_face01.png").write_bytes(b"existing")
+    called_get_landmarks = False
+
+    def fake_get_landmarks(*args: object, **kwargs: object) -> list[object]:
+        """Fail if landmark detection is unexpectedly called."""
+        nonlocal called_get_landmarks
+        called_get_landmarks = True
+        del args, kwargs
+        return []
+
+    def fake_get_detector_for_skip() -> object:
+        """Return a fake detector."""
+        return object()
+
+    def fake_get_predictor_for_skip(model_path: Path) -> object:
+        """Return a fake predictor."""
+        del model_path
+        return object()
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector_for_skip)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor_for_skip)
+    monkeypatch.setattr(batch, "get_landmarks", fake_get_landmarks)
+
+    batch.align_faces(
+        batch.AlignmentConfig(
+            raw_dir=raw_dir,
+            aligned_dir=aligned_dir,
+            landmark_model_path=Path("resolved_model.dat"),
+        )
+    )
+
+    assert not called_get_landmarks

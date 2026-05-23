@@ -1,21 +1,45 @@
-"""Helpers for resolving and loading face landmark models."""
+"""Dlib model and landmark detection helpers."""
 
 from __future__ import annotations
 
+import logging
 import os
+import pathlib
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import dlib
 from platformdirs import user_data_path
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from ._typing import ImageArray, LandmarkList, PathInput
+
 MODEL_FILENAME = "shape_predictor_68_face_landmarks.dat"
 MODEL_ENV_VAR = "MORPHACE_LANDMARK_MODEL"
+
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    "LandmarkModelNotFoundError",
+    "NoFaceFoundError",
+    "default_landmark_model_path",
+    "detect_all_landmarks",
+    "get_detector",
+    "get_landmarks",
+    "get_predictor",
+    "resolve_landmark_model_path",
+]
 
 
 class LandmarkModelNotFoundError(FileNotFoundError):
     """Raised when the dlib landmark model file cannot be found."""
+
+
+class NoFaceFoundError(Exception):
+    """Raised when there is no face found."""
 
 
 @lru_cache(maxsize=1)
@@ -43,6 +67,62 @@ def get_predictor(landmark_model_path: Path) -> dlib.shape_predictor:
     """Lazy-load the dlib shape predictor."""
     model_path = landmark_model_path.expanduser().resolve()
     return _load_predictor(str(model_path))
+
+
+def detect_all_landmarks(
+    img: ImageArray,
+    detector: Any,
+    predictor: dlib.shape_predictor,
+) -> Iterator[LandmarkList]:
+    """Detect and extract landmarks for every face in an image.
+
+    Args:
+        img: Image array to scan for faces.
+        detector: Dlib-compatible face detector.
+        predictor: Dlib shape predictor used to extract landmarks.
+
+    Yields:
+        Landmark coordinate lists for each detected face.
+
+    Raises:
+        NoFaceFoundError: If the detector finds no faces.
+    """
+    detections = detector(img, 1)
+
+    if len(detections) == 0:
+        logger.error("Unable to find a face in the image.")
+        raise NoFaceFoundError("Unable to find a face in the image.")
+
+    for rect in detections:
+        shape = predictor(img, rect)
+        yield [(point.x, point.y) for point in shape.parts()]
+
+
+def get_landmarks(
+    image: PathInput,
+    detector: Any | None = None,
+    predictor: dlib.shape_predictor | None = None,
+) -> Iterator[LandmarkList]:
+    """Detect 68-point facial landmarks in an image file.
+
+    Args:
+        image: Path to the image to scan.
+        detector: Pre-loaded dlib detector.
+        predictor: Pre-loaded dlib predictor.
+
+    Yields:
+        Landmark coordinate lists for each detected face.
+
+    Raises:
+        RuntimeError: If either dlib model helper is missing.
+    """
+    if detector is None or predictor is None:
+        raise RuntimeError("Dlib models are not loaded. Cannot process faces.")
+
+    img_path = pathlib.Path(image).expanduser().resolve()
+    img = dlib.load_rgb_image(str(img_path))
+
+    yield from detect_all_landmarks(img, detector, predictor)
 
 
 def default_landmark_model_path() -> Path:
