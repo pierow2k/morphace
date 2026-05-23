@@ -12,39 +12,17 @@ single detected face.
 
 import logging
 from collections.abc import Sequence
-from dataclasses import dataclass
 from pathlib import Path
 
 import PIL.Image
 
-from ._typing import FloatPoint, PathInput, Point
-from .prep_alignment_geometry import calculate_alignment_quad
-from .prep_alignment_image import prepare_alignment_canvas, warp_aligned_face
+from morphace._typing import FloatPoint, PathInput, Point
+
+from .geometry import calculate_alignment_quad
+from .image import prepare_alignment_canvas, warp_aligned_face
+from .options import FaceAlignmentOptions
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class FaceAlignmentOptions:
-    """Configuration for aligning a detected face.
-
-    Attributes:
-        output_size: Final square image dimension in pixels.
-        transform_size: Intermediate square transform dimension in pixels.
-        enable_padding: Whether to synthesize reflected image padding.
-        x_scale: Horizontal scale factor for the aligned crop.
-        y_scale: Vertical scale factor for the aligned crop.
-        em_scale: Offset factor from the eyes toward the mouth.
-        alpha: Whether to include an alpha mask for padded regions.
-    """
-
-    output_size: int = 1024
-    transform_size: int = 4096
-    enable_padding: bool = True
-    x_scale: float = 1.0
-    y_scale: float = 1.0
-    em_scale: float = 0.1
-    alpha: bool = False
 
 
 def align_face_image(

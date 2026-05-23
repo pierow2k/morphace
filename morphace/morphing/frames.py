@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from ._typing import (
+from morphace._typing import (
     FloatPoint,
     ImageArray,
     ImagePair,
@@ -14,13 +14,18 @@ from ._typing import (
     Size,
     TriangleList,
 )
-from .morph_video import video_writer_context
+
+from .config import MorphVideoConfig
+from .video import video_writer_context
 
 TrianglePoints = tuple[
     np.ndarray | list[FloatPoint],
     np.ndarray | list[FloatPoint],
     np.ndarray | list[FloatPoint],
 ]
+type CvRect = tuple[int, int, int, int]
+
+_GRAYSCALE_DIMS = 2
 
 
 def _apply_affine_transform(
@@ -61,6 +66,71 @@ def _apply_affine_transform(
     )
 
 
+def _bounding_rect(triangle: np.ndarray | list[FloatPoint]) -> CvRect:
+    """Return the OpenCV bounding rectangle for a triangle."""
+    x, y, width, height = cv2.boundingRect(
+        np.asarray([triangle], dtype=np.float32)
+    )
+    return (x, y, width, height)
+
+
+def _offset_triangle(
+    triangle: np.ndarray | list[FloatPoint],
+    rect: CvRect,
+) -> list[FloatPoint]:
+    """Return triangle points relative to a rectangle origin."""
+    return [
+        (triangle[index][0] - rect[0], triangle[index][1] - rect[1])
+        for index in range(3)
+    ]
+
+
+def _triangle_mask(
+    image: ImageArray,
+    rect: CvRect,
+    triangle: list[FloatPoint],
+) -> ImageArray:
+    """Create a mask for a triangle inside a bounding rectangle."""
+    width, height = rect[2], rect[3]
+
+    if image.ndim == _GRAYSCALE_DIMS:
+        mask_shape = (height, width)
+        fill_color = 1.0
+    else:
+        mask_shape = (height, width, image.shape[2])
+        fill_color = tuple([1.0] * image.shape[2])
+
+    mask = np.zeros(mask_shape, dtype=np.float32)
+    cv2.fillConvexPoly(
+        mask,
+        np.asarray([triangle], dtype=np.int32),
+        fill_color,
+        16,
+        0,
+    )
+    return mask
+
+
+def _crop_rect(image: ImageArray, rect: CvRect) -> ImageArray:
+    """Crop an image array to an OpenCV rectangle."""
+    x, y, width, height = rect
+    return image[y : y + height, x : x + width]
+
+
+def _blend_triangle_patch(
+    image: ImageArray,
+    rect: CvRect,
+    mask: ImageArray,
+    patch: ImageArray,
+) -> None:
+    """Blend a warped triangular patch into the destination image."""
+    x, y, width, height = rect
+    destination = image[y : y + height, x : x + width]
+    image[y : y + height, x : x + width] = (
+        destination * (1 - mask) + patch * mask
+    )
+
+
 def _morph_triangle(
     img1: ImageArray,
     img2: ImageArray,
@@ -79,61 +149,19 @@ def _morph_triangle(
     """
     tri_src1, tri_src2, tri_dest = triangles
 
-    # Find bounding rectangles for each triangle
-    rect_src1 = cv2.boundingRect(np.asarray([tri_src1], dtype=np.float32))
-    rect_src2 = cv2.boundingRect(np.asarray([tri_src2], dtype=np.float32))
-    rect_dest = cv2.boundingRect(np.asarray([tri_dest], dtype=np.float32))
+    rect_src1 = _bounding_rect(tri_src1)
+    rect_src2 = _bounding_rect(tri_src2)
+    rect_dest = _bounding_rect(tri_dest)
 
-    # Calculate offset points relative to top-left corner of bounding
-    # rectangles using list comprehensions for brevity and readability.
-    tri_src1_offset = [
-        (tri_src1[i][0] - rect_src1[0], tri_src1[i][1] - rect_src1[1])
-        for i in range(3)
-    ]
-    tri_src2_offset = [
-        (tri_src2[i][0] - rect_src2[0], tri_src2[i][1] - rect_src2[1])
-        for i in range(3)
-    ]
-    tri_dest_offset = [
-        (tri_dest[i][0] - rect_dest[0], tri_dest[i][1] - rect_dest[1])
-        for i in range(3)
-    ]
+    tri_src1_offset = _offset_triangle(tri_src1, rect_src1)
+    tri_src2_offset = _offset_triangle(tri_src2, rect_src2)
+    tri_dest_offset = _offset_triangle(tri_dest, rect_dest)
 
-    # Create mask for the destination triangle
-    # Dynamically determine channels to support grayscale or RGBA
-    # the rect_dest is (x, y, w, h).
-    rect_dest_width, rect_dest_height = rect_dest[2], rect_dest[3]
+    mask = _triangle_mask(img, rect_dest, tri_dest_offset)
+    img1_rect = _crop_rect(img1, rect_src1)
+    img2_rect = _crop_rect(img2, rect_src2)
 
-    # Handle both grayscale (2D) and color (3D) images
-    grayscale_dims = 2
-    if img.ndim == grayscale_dims:
-        mask_shape = (rect_dest_height, rect_dest_width)
-        fill_color = 1.0
-    else:
-        mask_shape = (rect_dest_height, rect_dest_width, img.shape[2])
-        fill_color = tuple([1.0] * img.shape[2])
-
-    mask = np.zeros(mask_shape, dtype=np.float32)
-    cv2.fillConvexPoly(
-        mask,
-        np.asarray([tri_dest_offset], dtype=np.int32),
-        fill_color,
-        16,
-        0,
-    )
-
-    # Crop source image patches
-    img1_rect = img1[
-        rect_src1[1] : rect_src1[1] + rect_src1[3],
-        rect_src1[0] : rect_src1[0] + rect_src1[2],
-    ]
-    img2_rect = img2[
-        rect_src2[1] : rect_src2[1] + rect_src2[3],
-        rect_src2[0] : rect_src2[0] + rect_src2[2],
-    ]
-
-    # Warp patches
-    size = (rect_dest_width, rect_dest_height)
+    size = (rect_dest[2], rect_dest[3])
     warp_img1 = _apply_affine_transform(
         img1_rect, tri_src1_offset, tri_dest_offset, size
     )
@@ -143,17 +171,7 @@ def _morph_triangle(
 
     # Alpha blend rectangular patches
     img_rect = (1.0 - alpha) * warp_img1 + alpha * warp_img2
-
-    # Copy triangular region to output image using the mask
-    # Slicing coordinates for the destination image
-    y_start, x_start = rect_dest[1], rect_dest[0]
-    y_end, x_end = y_start + rect_dest_height, x_start + rect_dest_width
-
-    # Ensure we don't go out of bounds (safety check)
-    img_roi = img[y_start:y_end, x_start:x_end]
-
-    # Blend using mask (handle broadcasting if mask is 2D and img_roi is 3D)
-    img[y_start:y_end, x_start:x_end] = img_roi * (1 - mask) + img_rect * mask
+    _blend_triangle_patch(img, rect_dest, mask, img_rect)
 
 
 def generate_morph_frame(  # noqa: PLR0913
@@ -206,7 +224,7 @@ def generate_morph_sequence(
     img_pair: ImagePair,
     points_pair: Sequence[LandmarkList],
     tri_list: TriangleList,
-    video_config: tuple[int, int, Size, str],
+    video_config: MorphVideoConfig,
     show_triangles: bool,
 ) -> None:
     """Generates a face morphing sequence and saves it as a video."""

@@ -6,12 +6,13 @@ face alignment, Delaunay triangulation, and sequence generation.
 
 from pathlib import Path
 
-from ._typing import ImageArray
-from .models import get_detector, get_predictor
-from .morph_config import MorphConfig
-from .morph_face import generate_morph_sequence
-from .morph_landmark_detection import align_faces
-from .morph_triangulation import compute_delaunay_triangles
+from morphace._typing import ImageArray
+from morphace.landmarks import get_detector, get_predictor
+
+from .config import MorphConfig, MorphVideoConfig
+from .correspondence import align_faces
+from .frames import generate_morph_sequence
+from .triangulation import compute_delaunay_triangles
 
 
 def morph_faces(
@@ -34,20 +35,29 @@ def morph_faces(
     detector = get_detector()
     predictor = get_predictor(config.landmark_model_path)
 
-    size, img1, img2, points1, points2, avg_landmarks = align_faces(
+    correspondences = align_faces(
         img1,
         img2,
         detector,
         predictor,
     )
 
-    triangles = compute_delaunay_triangles(size[1], size[0], avg_landmarks)
+    triangles = compute_delaunay_triangles(
+        correspondences.size[1],
+        correspondences.size[0],
+        correspondences.average_landmarks,
+    )
 
     generate_morph_sequence(
-        (img1, img2),
-        (points1, points2),
+        (correspondences.image1, correspondences.image2),
+        (correspondences.points1, correspondences.points2),
         triangles,
-        (config.duration, config.frame_rate, size, config.output),
+        MorphVideoConfig(
+            duration=config.duration,
+            frame_rate=config.frame_rate,
+            size=correspondences.size,
+            output=config.output,
+        ),
         show_triangles,
     )
 

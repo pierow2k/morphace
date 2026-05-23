@@ -15,21 +15,22 @@ import logging
 import sys
 from importlib.metadata import version
 from pathlib import Path
+from typing import Any
 
 import cv2
 
-from ._dlib_utils import NoFaceFoundError
-from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
-from .morph_config import MorphConfig
-from .morph_workflow import morph_faces
+from morphace.landmarks import (
+    LandmarkModelNotFoundError,
+    NoFaceFoundError,
+    resolve_landmark_model_path,
+)
+from morphace.morphing import MorphConfig, morph_faces
 
 logger = logging.getLogger(__name__)
 
 
-def main() -> None:
-    """CLI for morphace."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Generate a face morphing video."
     )
@@ -79,22 +80,39 @@ def main() -> None:
         action="version",
         version="%(prog)s " + version("morphace"),
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
 
-    # Input validation
-    if args.duration <= 0 or args.fps <= 0:
-        logger.error("Duration and frame rate must be positive integers.")
-        sys.exit(1)
 
+def _read_input_images(args: argparse.Namespace) -> tuple[Any, Any] | None:
+    """Read both input images, returning None if either cannot be read."""
     image1 = cv2.imread(args.img1)
     image2 = cv2.imread(args.img2)
 
     if image1 is None:
         logger.error("Could not read image: %s", args.img1)
-        sys.exit(1)
+        return None
     if image2 is None:
         logger.error("Could not read image: %s", args.img2)
-        sys.exit(1)
+        return None
+
+    return image1, image2
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI for morphace."""
+    args = parse_args(argv)
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    # Input validation
+    if args.duration <= 0 or args.fps <= 0:
+        logger.error("Duration and frame rate must be positive integers.")
+        return 1
+
+    images = _read_input_images(args)
+    if images is None:
+        return 1
+    image1, image2 = images
 
     try:
         landmark_model_path = resolve_landmark_model_path(args.landmark_model)
@@ -103,7 +121,7 @@ def main() -> None:
         # input issue. We suppress the linter warning because we don't need
         # a traceback here.
         logger.error("%s", error)  # noqa: TRY400
-        sys.exit(1)
+        return 1
 
     config = MorphConfig(
         duration=args.duration,
@@ -119,12 +137,14 @@ def main() -> None:
         logger.error(  # noqa: TRY400
             "Error: Could not detect a face in one or both images."
         )
-        sys.exit(1)
+        return 1
     except RuntimeError:
         # Use exception() to log the stack trace for unexpected system errors.
         logger.exception("An unexpected runtime error occurred.")
-        sys.exit(1)
+        return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

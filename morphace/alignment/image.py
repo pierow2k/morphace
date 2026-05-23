@@ -7,39 +7,15 @@ output image.
 """
 
 import logging
-from typing import Protocol
 
 import numpy as np
 import PIL.Image
 import scipy.ndimage
 
-from .prep_alignment_geometry import AlignmentQuad
+from .geometry import AlignmentQuad
+from .options import FaceAlignmentOptions
 
 logger = logging.getLogger(__name__)
-
-
-class ImageAlignmentOptions(Protocol):
-    """Option fields used by face-alignment image processing."""
-
-    @property
-    def output_size(self) -> int:
-        """Final square image dimension in pixels."""
-        raise NotImplementedError
-
-    @property
-    def transform_size(self) -> int:
-        """Intermediate square transform dimension in pixels."""
-        raise NotImplementedError
-
-    @property
-    def enable_padding(self) -> bool:
-        """Whether to synthesize reflected image padding."""
-        raise NotImplementedError
-
-    @property
-    def alpha(self) -> bool:
-        """Whether to include an alpha mask for padded regions."""
-        raise NotImplementedError
 
 
 # A value of 0.5 ensures the face geometry remains at least 2x the target size
@@ -58,7 +34,7 @@ def _shrink_image(
     image: PIL.Image.Image,
     crop_corners: AlignmentQuad,
     crop_size: float,
-    options: ImageAlignmentOptions,
+    options: FaceAlignmentOptions,
 ) -> tuple[PIL.Image.Image, AlignmentQuad, float]:
     """Conditionally downscale the image and adjust the crop geometry.
 
@@ -182,12 +158,98 @@ def _compute_blend_gradient(
     return np.maximum(1.0 - x_dist, 1.0 - y_dist)
 
 
+def _required_padding(
+    image: PIL.Image.Image,
+    quad: AlignmentQuad,
+    border: int,
+) -> tuple[int, int, int, int]:
+    """Calculate missing canvas margins in left, top, right, bottom order."""
+    quad_bbox = (
+        int(np.floor(min(quad[:, 0]))),
+        int(np.floor(min(quad[:, 1]))),
+        int(np.ceil(max(quad[:, 0]))),
+        int(np.ceil(max(quad[:, 1]))),
+    )
+
+    return (
+        max(-quad_bbox[0] + border, 0),
+        max(-quad_bbox[1] + border, 0),
+        max(quad_bbox[2] - image.size[0] + border, 0),
+        max(quad_bbox[3] - image.size[1] + border, 0),
+    )
+
+
+def _minimum_padding(
+    padding: tuple[int, int, int, int],
+    crop_size: float,
+) -> np.ndarray:
+    """Apply the minimum padding needed for smooth edge blending."""
+    min_pad = int(np.rint(crop_size * _MIN_PAD_SCALE))
+    return np.maximum(padding, min_pad)
+
+
+def _reflected_canvas_array(
+    image: PIL.Image.Image,
+    padding: np.ndarray,
+) -> np.ndarray:
+    """Return a float image array extended by reflective padding."""
+    image_array = np.asarray(image, dtype=np.float32)
+    return np.pad(
+        image_array,
+        ((padding[1], padding[3]), (padding[0], padding[2]), (0, 0)),
+        "reflect",
+    )
+
+
+def _blend_padded_edges(
+    image_array: np.ndarray,
+    padding: np.ndarray,
+    crop_size: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Smooth reflected padding with blur and median-color blending."""
+    mask = _compute_blend_gradient(image_array, padding)
+    blur = crop_size * _BLUR_SCALE
+
+    blurred = scipy.ndimage.gaussian_filter(image_array, [blur, blur, 0])
+    blend_mask_blur = np.clip(
+        mask * _EDGE_BLEND_THRESHOLD + _SOLID_BLEND_THRESHOLD,
+        0.0,
+        1.0,
+    )
+    image_array += (blurred - image_array) * blend_mask_blur[..., np.newaxis]
+
+    median_color = np.median(image_array, axis=(0, 1))
+    median_mask = np.clip(mask, 0.0, 1.0)
+    image_array += (median_color - image_array) * median_mask[..., np.newaxis]
+
+    image_array = np.clip(np.rint(image_array), 0, 255).astype(np.uint8)
+    return image_array, mask
+
+
+def _canvas_image_from_array(
+    image_array: np.ndarray,
+    mask: np.ndarray,
+    include_alpha: bool,
+) -> PIL.Image.Image:
+    """Build a Pillow image from a padded canvas array."""
+    if not include_alpha:
+        return PIL.Image.fromarray(image_array, "RGB")
+
+    alpha_mask = 1 - np.clip(_EDGE_BLEND_THRESHOLD * mask, 0.0, 1.0)
+    alpha_mask = np.clip(np.rint(alpha_mask * 255), 0, 255).astype(np.uint8)
+    image_array = np.concatenate(
+        (image_array, alpha_mask[..., np.newaxis]),
+        axis=2,
+    )
+    return PIL.Image.fromarray(image_array, "RGBA")
+
+
 def _extend_image_canvas(
     image: PIL.Image.Image,
     quad: AlignmentQuad,
     crop_size: float,
     border: int,
-    options: ImageAlignmentOptions,
+    options: FaceAlignmentOptions,
 ) -> tuple[PIL.Image.Image, AlignmentQuad]:
     """Extend the image canvas with reflected padding and blended edges.
 
@@ -205,72 +267,15 @@ def _extend_image_canvas(
     Returns:
         The extended image and quad shifted by the applied padding.
     """
-    # Calculate the current quad bounds so we can determine how much source
-    # area is missing on each side.
-    quad_bbox = (
-        int(np.floor(min(quad[:, 0]))),
-        int(np.floor(min(quad[:, 1]))),
-        int(np.ceil(max(quad[:, 0]))),
-        int(np.ceil(max(quad[:, 1]))),
-    )
-
-    # Required padding margins in left, top, right, bottom order.
-    padding = (
-        max(-quad_bbox[0] + border, 0),
-        max(-quad_bbox[1] + border, 0),
-        max(quad_bbox[2] - image.size[0] + border, 0),
-        max(quad_bbox[3] - image.size[1] + border, 0),
-    )
+    padding = _required_padding(image, quad, border)
 
     if not options.enable_padding or max(padding) < 1:
         return image, quad
 
-    # Enforce a minimum padding size on all sides so blur and median-color
-    # blending have enough room to hide reflection seams.
-    min_pad = int(np.rint(crop_size * _MIN_PAD_SCALE))
-    padding = np.maximum(padding, min_pad)
-
-    # Reflective padding provides plausible edge content before blending.
-    image_array = np.asarray(image, dtype=np.float32)
-    image_array = np.pad(
-        image_array,
-        ((padding[1], padding[3]), (padding[0], padding[2]), (0, 0)),
-        "reflect",
-    )
-
-    # Generate a map that is strongest (1.0) near the padded image edges.
-    mask = _compute_blend_gradient(image_array, padding)
-    blur = crop_size * _BLUR_SCALE
-
-    # Blend with a blurred version to smooth reflection artifacts.
-    blurred = scipy.ndimage.gaussian_filter(image_array, [blur, blur, 0])
-    blend_mask_blur = np.clip(
-        mask * _EDGE_BLEND_THRESHOLD + _SOLID_BLEND_THRESHOLD,
-        0.0,
-        1.0,
-    )
-    image_array += (blurred - image_array) * blend_mask_blur
-
-    # Blend toward the median image color at the extreme edges to create a
-    # gradual fade instead of a hard reflected border.
-    median_color = np.median(image_array, axis=(0, 1))
-    image_array += (median_color - image_array) * np.clip(mask, 0.0, 1.0)
-
-    # Convert back to uint8 image data after float-domain blending.
-    image_array = np.clip(np.rint(image_array), 0, 255).astype(np.uint8)
-
-    if options.alpha:
-        # Optional alpha channel is opaque for the original image and fades to
-        # transparent at the outermost padded edges.
-        alpha_mask = 1 - np.clip(_EDGE_BLEND_THRESHOLD * mask, 0.0, 1.0)
-        alpha_mask = np.clip(np.rint(alpha_mask * 255), 0, 255).astype(np.uint8)
-        image_array = np.concatenate(
-            (image_array, alpha_mask[..., np.newaxis]),
-            axis=2,
-        )
-        image = PIL.Image.fromarray(image_array, "RGBA")
-    else:
-        image = PIL.Image.fromarray(image_array, "RGB")
+    padding = _minimum_padding(padding, crop_size)
+    image_array = _reflected_canvas_array(image, padding)
+    image_array, mask = _blend_padded_edges(image_array, padding, crop_size)
+    image = _canvas_image_from_array(image_array, mask, options.alpha)
 
     # Shift the quad into the padded image's coordinate space.
     quad += padding[:2]
@@ -282,7 +287,7 @@ def prepare_alignment_canvas(
     image: PIL.Image.Image,
     quad: AlignmentQuad,
     crop_size: float,
-    options: ImageAlignmentOptions,
+    options: FaceAlignmentOptions,
 ) -> tuple[PIL.Image.Image, AlignmentQuad]:
     """Prepare an image and quad for the final alignment warp.
 
@@ -310,7 +315,7 @@ def prepare_alignment_canvas(
 def warp_aligned_face(
     image: PIL.Image.Image,
     quad: AlignmentQuad,
-    options: ImageAlignmentOptions,
+    options: FaceAlignmentOptions,
 ) -> PIL.Image.Image:
     """Warp the input image to align the face and resize the result.
 

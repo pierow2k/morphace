@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 
 import morphace
-from morphace import _dlib_utils, morph_landmark_detection, prep_landmarks
+from morphace import landmarks
+from morphace.morphing import correspondence
 
 
 def _empty_detector(image: Any, upsample_num_times: int) -> list[Any]:
@@ -17,15 +18,8 @@ def _empty_detector(image: Any, upsample_num_times: int) -> list[Any]:
 
 def test_public_no_face_found_error_is_landmark_error() -> None:
     """Verify the package root re-exports the landmark exception."""
-    assert morphace.NoFaceFoundError is _dlib_utils.NoFaceFoundError
-    assert (
-        morphace.NoFaceFoundError is morph_landmark_detection.NoFaceFoundError
-    )
-
-
-def test_prep_no_face_found_error_is_landmark_error() -> None:
-    """Verify prep landmark detection uses the public no-face exception."""
-    assert prep_landmarks.NoFaceFoundError is morphace.NoFaceFoundError
+    assert morphace.NoFaceFoundError is landmarks.NoFaceFoundError
+    assert morphace.NoFaceFoundError is correspondence.NoFaceFoundError
 
 
 def test_align_faces_raises_public_no_face_found_error() -> None:
@@ -33,7 +27,7 @@ def test_align_faces_raises_public_no_face_found_error() -> None:
     image = np.zeros((8, 8, 3), dtype=np.uint8)
 
     with pytest.raises(morphace.NoFaceFoundError):
-        morph_landmark_detection.align_faces(
+        correspondence.align_faces(
             image,
             image,
             _empty_detector,

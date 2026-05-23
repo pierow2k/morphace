@@ -6,9 +6,15 @@ import sys
 from importlib.metadata import version
 from pathlib import Path
 
-from .models import LandmarkModelNotFoundError, resolve_landmark_model_path
-from .prep_face_alignment import FaceAlignmentOptions
-from .prep_images import AlignmentConfig, align_faces
+from morphace.alignment import (
+    AlignmentConfig,
+    FaceAlignmentOptions,
+    align_faces,
+)
+from morphace.landmarks import (
+    LandmarkModelNotFoundError,
+    resolve_landmark_model_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +42,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--output_size",
+        "--output-size",
         default=1024,
         help="The dimension of images for input to the model",
         type=int,

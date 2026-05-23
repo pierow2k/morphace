@@ -1,22 +1,44 @@
 """Module for detecting facial landmarks and aligning images for morphing."""
 
+from dataclasses import dataclass
 from typing import Any
 
 import cv2
 import dlib
 import numpy as np
 
-from ._dlib_utils import NoFaceFoundError, _detect_all_landmarks
-from ._typing import (
-    FaceCorrespondences,
+from morphace._typing import (
     ImageArray,
     ImagePair,
+    LandmarkArray,
     LandmarkList,
     Size,
 )
+from morphace.landmarks import NoFaceFoundError, detect_all_landmarks
 
-__all__ = ["NoFaceFoundError", "align_faces"]
+__all__ = ["FaceCorrespondences", "NoFaceFoundError", "align_faces"]
 _EXPECTED_LANDMARK_COUNT = 68
+
+
+@dataclass(frozen=True)
+class FaceCorrespondences:
+    """Images and point correspondences used by the morphing pipeline.
+
+    Attributes:
+        size: Cropped frame size as ``(height, width)``.
+        image1: First image cropped to the shared frame size.
+        image2: Second image cropped to the shared frame size.
+        points1: Landmark and boundary points for the first image.
+        points2: Landmark and boundary points for the second image.
+        average_landmarks: Average landmark positions for triangulation.
+    """
+
+    size: Size
+    image1: ImageArray
+    image2: ImageArray
+    points1: LandmarkList
+    points2: LandmarkList
+    average_landmarks: LandmarkArray
 
 
 def _center_crop(img: ImageArray, target_h: int, target_w: int) -> ImageArray:
@@ -27,7 +49,7 @@ def _center_crop(img: ImageArray, target_h: int, target_w: int) -> ImageArray:
     return img[start_h : start_h + target_h, start_w : start_w + target_w]
 
 
-def _crop_image(img1: ImageArray, img2: ImageArray) -> ImagePair:
+def match_image_sizes(img1: ImageArray, img2: ImageArray) -> ImagePair:
     """Resizes and crops two images so they have matching dimensions.
 
     Strategy: If one image is smaller in both dimensions, the larger image
@@ -115,7 +137,7 @@ def align_faces(
         raise RuntimeError("Dlib models are not loaded. Cannot process faces.")
 
     # Crop images to matching dimensions.
-    img_list = _crop_image(image1, image2)
+    img_list = match_image_sizes(image1, image2)
     img1_cropped, img2_cropped = img_list
 
     # Initialize storage
@@ -134,7 +156,7 @@ def align_faces(
     ):
         # Only process the primary face. Processing multiple faces would
         # break the point correspondence math.
-        face_points = next(_detect_all_landmarks(img, detector, predictor))
+        face_points = next(detect_all_landmarks(img, detector, predictor))
 
         # Extract landmarks
         for i, (x, y) in enumerate(face_points):
@@ -159,4 +181,11 @@ def align_faces(
     # _get_boundary_points
     narray = np.vstack([narray, boundary_points])
 
-    return (size, img1_cropped, img2_cropped, list1, list2, narray)
+    return FaceCorrespondences(
+        size=size,
+        image1=img1_cropped,
+        image2=img2_cropped,
+        points1=list1,
+        points2=list2,
+        average_landmarks=narray,
+    )

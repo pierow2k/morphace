@@ -7,40 +7,20 @@ alignment model can be understood in one place.
 """
 
 from collections.abc import Sequence
-from typing import Any, Protocol
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
-from ._typing import FloatPoint, Point
+from morphace._typing import FloatPoint, Point
+
+from .options import FaceAlignmentOptions
 
 # A 4x2 array representing the corners of the alignment quadrilateral in the
 # order expected by Pillow's perspective transform: top-left, bottom-left,
 # bottom-right, top-right.
 type AlignmentQuad = NDArray[Any]
-
-
-class GeometryOptions(Protocol):
-    """Option fields used by face-alignment geometry."""
-
-    @property
-    def x_scale(self) -> float:
-        """Horizontal scale factor for the aligned crop."""
-        raise NotImplementedError
-
-    @property
-    def y_scale(self) -> float:
-        """Vertical scale factor for the aligned crop."""
-        raise NotImplementedError
-
-    @property
-    def em_scale(self) -> float:
-        """Offset factor from the eyes toward the mouth.
-
-        Controls how far down the crop center is placed relative to the eyes.
-        A value of 0.0 centers on the eyes; higher values shift toward mouth.
-        """
-        raise NotImplementedError
 
 
 # Constants for the standard 68-point facial landmark model (dlib/IBUG format).
@@ -50,6 +30,15 @@ _LM_RIGHT_EYE = slice(42, 48)  # Points 42-47: right eye landmarks.
 _LM_MOUTH_OUTER = slice(48, 60)  # Points 48-59: outer lip contour.
 _EXPECTED_LANDMARK_COUNT = 68
 _FLOAT_TOLERANCE = 1e-7
+
+
+@dataclass(frozen=True)
+class _FaceFeatureGeometry:
+    """Measured face geometry used to orient the alignment crop."""
+
+    eyes_midpoint: np.ndarray
+    eye_line_vec: np.ndarray
+    face_axis_vec: np.ndarray
 
 
 def _rotate_90_ccw(vec: np.ndarray) -> np.ndarray:
@@ -65,9 +54,48 @@ def _rotate_90_ccw(vec: np.ndarray) -> np.ndarray:
     return np.array([-vec[1], vec[0]])
 
 
+def _landmark_array(
+    face_landmarks: Sequence[FloatPoint | Point],
+) -> np.ndarray:
+    """Return validated landmark coordinates as a NumPy array."""
+    landmarks = np.array(face_landmarks)
+
+    if landmarks.shape[0] != _EXPECTED_LANDMARK_COUNT:
+        raise ValueError(
+            f"This function requires the 68-point landmark model. "
+            f"Received {landmarks.shape[0]} points."
+        )
+
+    return landmarks
+
+
+def _measure_face_features(landmarks: np.ndarray) -> _FaceFeatureGeometry:
+    """Measure eye and mouth geometry from 68-point landmarks."""
+    lm_eye_left = landmarks[_LM_LEFT_EYE]
+    lm_eye_right = landmarks[_LM_RIGHT_EYE]
+    lm_mouth_outer = landmarks[_LM_MOUTH_OUTER]
+
+    # Using anatomical naming: "left" is the person's left (viewer's right).
+    eye_left = np.mean(lm_eye_left, axis=0)
+    eye_right = np.mean(lm_eye_right, axis=0)
+    eyes_midpoint = (eye_left + eye_right) * 0.5
+    eye_line_vec = eye_right - eye_left
+
+    # Mouth corners: point 48 is anatomical left, point 54 is anatomical right.
+    mouth_left_corner = lm_mouth_outer[0]
+    mouth_right_corner = lm_mouth_outer[6]
+    mouth_center = (mouth_left_corner + mouth_right_corner) * 0.5
+
+    return _FaceFeatureGeometry(
+        eyes_midpoint=eyes_midpoint,
+        eye_line_vec=eye_line_vec,
+        face_axis_vec=mouth_center - eyes_midpoint,
+    )
+
+
 def calculate_alignment_quad(
     face_landmarks: Sequence[FloatPoint | Point],
-    options: GeometryOptions,
+    options: FaceAlignmentOptions,
 ) -> tuple[AlignmentQuad, float]:
     """Calculate the alignment quadrilateral and crop size for a face image.
 
@@ -92,37 +120,15 @@ def calculate_alignment_quad(
               (top-left, bottom-left, bottom-right, top-right).
             - crop_size: Scalar value representing the square crop dimension.
     """
-    landmarks = np.array(face_landmarks)
-
-    if landmarks.shape[0] != _EXPECTED_LANDMARK_COUNT:
-        raise ValueError(
-            f"This function requires the 68-point landmark model. "
-            f"Received {landmarks.shape[0]} points."
-        )
-
-    # Extract landmark groups using standard 68-point model indices.
-    lm_eye_left = landmarks[_LM_LEFT_EYE]
-    lm_eye_right = landmarks[_LM_RIGHT_EYE]
-    lm_mouth_outer = landmarks[_LM_MOUTH_OUTER]
-
-    # Calculate geometric centers of facial features.
-    # Using anatomical naming: "left" is the person's left (viewer's right).
-    eye_left = np.mean(lm_eye_left, axis=0)
-    eye_right = np.mean(lm_eye_right, axis=0)
-    eyes_midpoint = (eye_left + eye_right) * 0.5
-    eye_line_vec = eye_right - eye_left
-
-    # Mouth corners: point 48 is anatomical left, point 54 is anatomical right.
-    mouth_left_corner = lm_mouth_outer[0]  # Index 0 = point 48.
-    mouth_right_corner = lm_mouth_outer[6]  # Index 6 = point 54.
-    mouth_center = (mouth_left_corner + mouth_right_corner) * 0.5
-    face_axis_vec = mouth_center - eyes_midpoint
+    features = _measure_face_features(_landmark_array(face_landmarks))
 
     # Determine the orientation of the crop rectangle. Combining the eye-line
     # vector with a rotated face-axis vector stabilizes the crop against head
     # rotation (roll). The result is a diagonal vector whose direction blends
     # horizontal (eye-line) and vertical (face-axis) information.
-    crop_vec_x = eye_line_vec - _rotate_90_ccw(face_axis_vec)
+    crop_vec_x = features.eye_line_vec - _rotate_90_ccw(
+        features.face_axis_vec
+    )
 
     # Normalize the vector before applying face-size scaling.
     x_norm = np.hypot(*crop_vec_x)
@@ -134,8 +140,8 @@ def calculate_alignment_quad(
     # Scale the vector based on facial dimensions. The crop size is determined
     # by the larger of eye separation (width proxy) or eye-to-mouth distance
     # (height proxy), ensuring the full face stays inside the aligned crop.
-    face_width_estimate = np.hypot(*eye_line_vec) * 2.0
-    face_height_estimate = np.hypot(*face_axis_vec) * 1.8
+    face_width_estimate = np.hypot(*features.eye_line_vec) * 2.0
+    face_height_estimate = np.hypot(*features.face_axis_vec) * 1.8
     crop_vec_x *= max(face_width_estimate, face_height_estimate)
     crop_vec_x *= options.x_scale
 
@@ -145,7 +151,9 @@ def calculate_alignment_quad(
     # Offset the crop center from the eyes toward the mouth based on em_scale.
     # This controls vertical framing: 0.0 centers on eyes, higher values include
     # more of the lower face.
-    crop_center = eyes_midpoint + face_axis_vec * options.em_scale
+    crop_center = (
+        features.eyes_midpoint + features.face_axis_vec * options.em_scale
+    )
 
     # Pillow expects quad corners in top-left, bottom-left, bottom-right,
     # top-right order. Each corner is computed by adding/subtracting the

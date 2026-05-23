@@ -4,10 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from morphace import prep_cli
-from morphace.models import LandmarkModelNotFoundError
-from morphace.prep_face_alignment import FaceAlignmentOptions
-from morphace.prep_images import AlignmentConfig
+from morphace.alignment import AlignmentConfig, FaceAlignmentOptions
+from morphace.cli import prep
+from morphace.landmarks import LandmarkModelNotFoundError
 
 
 def test_main_builds_alignment_config(
@@ -31,20 +30,20 @@ def test_main_builds_alignment_config(
         assert model_path == Path("shape_predictor.dat")
         return Path("resolved_shape_predictor.dat")
 
-    monkeypatch.setattr(prep_cli, "align_faces", fake_align_faces)
+    monkeypatch.setattr(prep, "align_faces", fake_align_faces)
     monkeypatch.setattr(
-        prep_cli,
+        prep,
         "resolve_landmark_model_path",
         fake_resolve_landmark_model_path,
     )
 
-    result = prep_cli.main(
+    result = prep.main(
         [
             "raw",
             "aligned",
             "--landmark-model",
             "shape_predictor.dat",
-            "--output_size",
+            "--output-size",
             "512",
             "--x-scale",
             "1.2",
@@ -92,14 +91,14 @@ def test_main_returns_error_when_model_is_missing(
         del model_path
         raise LandmarkModelNotFoundError("missing model")
 
-    monkeypatch.setattr(prep_cli, "align_faces", fake_align_faces)
+    monkeypatch.setattr(prep, "align_faces", fake_align_faces)
     monkeypatch.setattr(
-        prep_cli,
+        prep,
         "resolve_landmark_model_path",
         fake_resolve_landmark_model_path,
     )
 
-    result = prep_cli.main(["raw", "aligned"])
+    result = prep.main(["raw", "aligned"])
 
     assert result == 1
     assert not called_align_faces
