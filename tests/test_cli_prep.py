@@ -58,7 +58,7 @@ def test_main_builds_alignment_config(
     assert result == 0
     assert captured_configs == [
         AlignmentConfig(
-            source_dir=Path("raw"),
+            source=Path("raw"),
             aligned_dir=Path("aligned"),
             landmark_model_path=Path("resolved_shape_predictor.dat"),
             face_alignment=FaceAlignmentOptions(

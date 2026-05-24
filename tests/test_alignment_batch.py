@@ -69,7 +69,7 @@ def test_align_faces_uses_shared_model_helpers(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            source_dir=source_dir,
+            source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
             face_alignment=FaceAlignmentOptions(
@@ -104,7 +104,7 @@ def test_alignment_config_uses_default_face_alignment_options(
 ) -> None:
     """Verify image prep defaults to standard face alignment options."""
     config = batch.AlignmentConfig(
-        source_dir=tmp_path / "raw",
+        source=tmp_path / "raw",
         aligned_dir=tmp_path / "aligned",
         landmark_model_path=Path("resolved_model.dat"),
     )
@@ -148,7 +148,7 @@ def test_align_faces_skips_existing_output_without_overwrite(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            source_dir=source_dir,
+            source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
@@ -200,7 +200,7 @@ def test_align_faces_ignores_directories_and_non_images(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            source_dir=source_dir,
+            source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
@@ -259,7 +259,7 @@ def test_align_detected_faces_logs_alignment_failures(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            source_dir=source_dir,
+            source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
@@ -316,7 +316,7 @@ def test_align_faces_logs_landmark_detection_failures(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            source_dir=source_dir,
+            source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
