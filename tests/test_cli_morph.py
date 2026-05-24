@@ -101,6 +101,24 @@ def test_main_returns_error_for_unreadable_image(
     assert result == 1
 
 
+def test_main_returns_error_for_unreadable_first_image(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify the first unreadable input image returns an error."""
+
+    def fake_imread(path: str) -> np.ndarray | None:
+        """Fail to read the first image."""
+        if path == "first.png":
+            return None
+        return _image()
+
+    monkeypatch.setattr(morph.cv2, "imread", fake_imread)
+
+    result = morph.main(["first.png", "second.png"])
+
+    assert result == 1
+
+
 def test_main_returns_error_when_model_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -147,6 +165,39 @@ def test_main_returns_error_when_no_face_is_found(
         """Raise the public no-face error."""
         del args, kwargs
         raise NoFaceFoundError
+
+    def fake_imread(path: str) -> np.ndarray:
+        """Return a fake image."""
+        del path
+        return _image()
+
+    def fake_resolve_landmark_model_path(model_path: Path | None) -> Path:
+        """Return a resolved model path."""
+        del model_path
+        return Path("resolved_shape_predictor.dat")
+
+    monkeypatch.setattr(morph.cv2, "imread", fake_imread)
+    monkeypatch.setattr(
+        morph,
+        "resolve_landmark_model_path",
+        fake_resolve_landmark_model_path,
+    )
+    monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
+
+    result = morph.main(["first.png", "second.png"])
+
+    assert result == 1
+
+
+def test_main_returns_error_for_runtime_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify unexpected runtime workflow failures become CLI errors."""
+
+    def fake_morph_faces(*args: object, **kwargs: object) -> Path:
+        """Raise an unexpected runtime error."""
+        del args, kwargs
+        raise RuntimeError("ffmpeg failed")
 
     def fake_imread(path: str) -> np.ndarray:
         """Return a fake image."""

@@ -155,3 +155,171 @@ def test_align_faces_skips_existing_output_without_overwrite(
     )
 
     assert not called_get_landmarks
+
+
+def test_align_faces_ignores_directories_and_non_images(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify only recognized image files are sent to detection."""
+    raw_dir = tmp_path / "raw"
+    aligned_dir = tmp_path / "aligned"
+    raw_dir.mkdir()
+    (raw_dir / "nested").mkdir()
+    (raw_dir / "notes.txt").write_text("not an image", encoding="utf-8")
+    image_path = raw_dir / "face.JPEG"
+    image_path.write_bytes(b"not a real image")
+    processed: list[Path] = []
+
+    def fake_get_detector() -> object:
+        """Return a fake detector."""
+        return object()
+
+    def fake_get_predictor(model_path: Path) -> object:
+        """Return a fake predictor."""
+        del model_path
+        return object()
+
+    def fake_align_detected_faces(
+        config: batch.AlignmentConfig,
+        raw_img_path: Path,
+        detector: object,
+        predictor: object,
+    ) -> None:
+        """Capture files selected for alignment."""
+        del config, detector, predictor
+        processed.append(raw_img_path)
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
+    monkeypatch.setattr(
+        batch,
+        "_align_detected_faces",
+        fake_align_detected_faces,
+    )
+
+    batch.align_faces(
+        batch.AlignmentConfig(
+            raw_dir=raw_dir,
+            aligned_dir=aligned_dir,
+            landmark_model_path=Path("resolved_model.dat"),
+        )
+    )
+
+    assert processed == [image_path]
+
+
+def test_align_detected_faces_logs_alignment_failures(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify a single face alignment failure does not stop the loop."""
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    raw_img_path = raw_dir / "face.png"
+    raw_img_path.write_bytes(b"not a real image")
+    aligned_dir = tmp_path / "aligned"
+    face_landmarks = [(float(index), float(index)) for index in range(68)]
+    attempts: list[Path] = []
+
+    def fake_get_detector() -> object:
+        """Return a fake detector."""
+        return object()
+
+    def fake_get_predictor(model_path: Path) -> object:
+        """Return a fake predictor."""
+        del model_path
+        return object()
+
+    def fake_get_landmarks(
+        image: Path,
+        detector: object,
+        predictor: object,
+    ) -> list[list[tuple[float, float]]]:
+        """Return two fake faces for alignment."""
+        del image, detector, predictor
+        return [face_landmarks, face_landmarks]
+
+    def fake_align_face_image(
+        src_file: Path,
+        dst_file: Path,
+        landmarks: list[tuple[float, float]],
+        options: FaceAlignmentOptions,
+    ) -> None:
+        """Raise for one face, then allow the next one."""
+        del src_file, landmarks, options
+        attempts.append(dst_file)
+        if len(attempts) == 1:
+            raise ValueError("cannot align")
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
+    monkeypatch.setattr(batch, "get_landmarks", fake_get_landmarks)
+    monkeypatch.setattr(batch, "align_face_image", fake_align_face_image)
+
+    batch.align_faces(
+        batch.AlignmentConfig(
+            raw_dir=raw_dir,
+            aligned_dir=aligned_dir,
+            landmark_model_path=Path("resolved_model.dat"),
+        )
+    )
+
+    assert attempts == [
+        aligned_dir / "face_face01.png",
+        aligned_dir / "face_face02.png",
+    ]
+
+
+def test_align_faces_logs_landmark_detection_failures(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify one image-level failure does not stop batch processing."""
+    raw_dir = tmp_path / "raw"
+    aligned_dir = tmp_path / "aligned"
+    raw_dir.mkdir()
+    first_image = raw_dir / "first.png"
+    second_image = raw_dir / "second.png"
+    first_image.write_bytes(b"not a real image")
+    second_image.write_bytes(b"not a real image")
+    processed: list[Path] = []
+
+    def fake_get_detector() -> object:
+        """Return a fake detector."""
+        return object()
+
+    def fake_get_predictor(model_path: Path) -> object:
+        """Return a fake predictor."""
+        del model_path
+        return object()
+
+    def fake_align_detected_faces(
+        config: batch.AlignmentConfig,
+        raw_img_path: Path,
+        detector: object,
+        predictor: object,
+    ) -> None:
+        """Raise for the first image and capture the second."""
+        del config, detector, predictor
+        if raw_img_path == first_image:
+            raise RuntimeError("detection failed")
+        processed.append(raw_img_path)
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
+    monkeypatch.setattr(
+        batch,
+        "_align_detected_faces",
+        fake_align_detected_faces,
+    )
+
+    batch.align_faces(
+        batch.AlignmentConfig(
+            raw_dir=raw_dir,
+            aligned_dir=aligned_dir,
+            landmark_model_path=Path("resolved_model.dat"),
+        )
+    )
+
+    assert processed == [second_image]

@@ -72,6 +72,40 @@ def test_main_builds_alignment_config(
     ]
 
 
+def test_main_defaults_aligned_dir_to_raw_cropped(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify prep CLI derives a default output directory."""
+    captured_configs: list[AlignmentConfig] = []
+
+    def fake_align_faces(
+        config: AlignmentConfig,
+        overwrite: bool = False,
+    ) -> None:
+        """Capture the defaulted prep configuration."""
+        assert overwrite is True
+        captured_configs.append(config)
+
+    def fake_resolve_landmark_model_path(
+        model_path: Path | None,
+    ) -> Path:
+        """Return a resolved model path without filesystem access."""
+        assert model_path is None
+        return Path("resolved_shape_predictor.dat")
+
+    monkeypatch.setattr(prep, "align_faces", fake_align_faces)
+    monkeypatch.setattr(
+        prep,
+        "resolve_landmark_model_path",
+        fake_resolve_landmark_model_path,
+    )
+
+    result = prep.main(["raw", "--overwrite"])
+
+    assert result == 0
+    assert captured_configs[0].aligned_dir == Path("raw") / "cropped"
+
+
 def test_main_returns_error_when_model_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
