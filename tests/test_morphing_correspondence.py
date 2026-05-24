@@ -16,6 +16,17 @@ def test_match_image_sizes_downscales_larger_image() -> None:
     assert matched2.shape == (4, 6, 3)
 
 
+def test_match_image_sizes_downscales_img1_when_img2_smaller() -> None:
+    """Verify img1 is downscaled and cropped when img2 is strictly smaller."""
+    image1 = np.zeros((8, 12, 3), dtype=np.uint8)
+    image2 = np.zeros((4, 6, 3), dtype=np.uint8)
+
+    matched1, matched2 = match_image_sizes(image1, image2)
+
+    assert matched1.shape == (4, 6, 3)
+    assert matched2.shape == (4, 6, 3)
+
+
 def test_match_image_sizes_crops_mixed_dimensions() -> None:
     """Verify mixed dimensions are center-cropped to shared minimums."""
     image1 = np.zeros((4, 10, 3), dtype=np.uint8)
