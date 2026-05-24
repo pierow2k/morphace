@@ -209,6 +209,178 @@ def test_align_faces_ignores_directories_and_non_images(
     assert processed == [image_path]
 
 
+def test_align_faces_processes_single_image_source(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify a file source is sent directly to alignment."""
+    image_path = tmp_path / "face.png"
+    aligned_dir = tmp_path / "aligned"
+    image_path.write_bytes(b"not a real image")
+    processed: list[Path] = []
+
+    def fake_get_detector() -> object:
+        """Return a fake detector."""
+        return object()
+
+    def fake_get_predictor(model_path: Path) -> object:
+        """Return a fake predictor."""
+        del model_path
+        return object()
+
+    def fake_align_detected_faces(
+        config: batch.AlignmentConfig,
+        raw_img_path: Path,
+        detector: object,
+        predictor: object,
+    ) -> None:
+        """Capture files selected for alignment."""
+        del config, detector, predictor
+        processed.append(raw_img_path)
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
+    monkeypatch.setattr(
+        batch,
+        "_align_detected_faces",
+        fake_align_detected_faces,
+    )
+
+    batch.align_faces(
+        batch.AlignmentConfig(
+            source=image_path,
+            aligned_dir=aligned_dir,
+            landmark_model_path=Path("resolved_model.dat"),
+        )
+    )
+
+    assert processed == [image_path]
+
+
+def test_align_faces_ignores_single_non_image_source(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify a non-image file source is not sent to alignment."""
+    source_file = tmp_path / "notes.txt"
+    aligned_dir = tmp_path / "aligned"
+    source_file.write_text("not an image", encoding="utf-8")
+    processed: list[Path] = []
+
+    def fake_get_detector() -> object:
+        """Return a fake detector."""
+        return object()
+
+    def fake_get_predictor(model_path: Path) -> object:
+        """Return a fake predictor."""
+        del model_path
+        return object()
+
+    def fake_align_detected_faces(
+        config: batch.AlignmentConfig,
+        raw_img_path: Path,
+        detector: object,
+        predictor: object,
+    ) -> None:
+        """Capture files selected for alignment."""
+        del config, detector, predictor
+        processed.append(raw_img_path)
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
+    monkeypatch.setattr(
+        batch,
+        "_align_detected_faces",
+        fake_align_detected_faces,
+    )
+
+    batch.align_faces(
+        batch.AlignmentConfig(
+            source=source_file,
+            aligned_dir=aligned_dir,
+            landmark_model_path=Path("resolved_model.dat"),
+        )
+    )
+
+    assert not processed
+
+
+def test_align_faces_rejects_invalid_source_before_loading_models(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify invalid source paths fail before model loading."""
+    missing_source = tmp_path / "missing"
+    aligned_dir = tmp_path / "aligned"
+    called_get_detector = False
+
+    def fake_get_detector() -> object:
+        """Fail if model helpers are unexpectedly called."""
+        nonlocal called_get_detector
+        called_get_detector = True
+        return object()
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+
+    with pytest.raises(
+        ValueError,
+        match="Source path does not exist or is not accessible",
+    ):
+        batch.align_faces(
+            batch.AlignmentConfig(
+                source=missing_source,
+                aligned_dir=aligned_dir,
+                landmark_model_path=Path("resolved_model.dat"),
+            )
+        )
+
+    assert not called_get_detector
+    assert not aligned_dir.exists()
+
+
+def test_align_faces_skips_existing_single_image_without_overwrite(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify skip behavior applies to a single file source."""
+    image_path = tmp_path / "face.png"
+    aligned_dir = tmp_path / "aligned"
+    image_path.write_bytes(b"not a real image")
+    aligned_dir.mkdir()
+    (aligned_dir / "face_face01.png").write_bytes(b"existing")
+    called_get_landmarks = False
+
+    def fake_get_landmarks(*args: object, **kwargs: object) -> list[object]:
+        """Fail if landmark detection is unexpectedly called."""
+        nonlocal called_get_landmarks
+        called_get_landmarks = True
+        del args, kwargs
+        return []
+
+    def fake_get_detector() -> object:
+        """Return a fake detector."""
+        return object()
+
+    def fake_get_predictor(model_path: Path) -> object:
+        """Return a fake predictor."""
+        del model_path
+        return object()
+
+    monkeypatch.setattr(batch, "get_detector", fake_get_detector)
+    monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
+    monkeypatch.setattr(batch, "get_landmarks", fake_get_landmarks)
+
+    batch.align_faces(
+        batch.AlignmentConfig(
+            source=image_path,
+            aligned_dir=aligned_dir,
+            landmark_model_path=Path("resolved_model.dat"),
+        )
+    )
+
+    assert not called_get_landmarks
+
+
 def test_align_detected_faces_logs_alignment_failures(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
