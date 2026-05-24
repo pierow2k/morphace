@@ -43,6 +43,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Path to the second image",
     )
     parser.add_argument(
+        "-l",
         "--landmark-model",
         type=Path,
         default=None,
@@ -53,29 +54,34 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "-o",
         "--output",
         default="morph.mp4",
         help="Path to save the output video (default: %(default)s)",
     )
     parser.add_argument(
+        "-d",
         "--duration",
         type=int,
         default=5,
         help="Duration of the morph in seconds (default: %(default)s)",
     )
     parser.add_argument(
+        "-r",
         "--fps",
         type=int,
         default=30,
         help="Frame rate (FPS) (default: %(default)s)",
     )
     parser.add_argument(
+        "-m",
         "--show-mesh",
         action="store_true",
         default=False,
         help="Show the triangle mesh overlay in the output video.",
     )
     parser.add_argument(
+        "-v",
         "--show-ffmpeg-output",
         action="store_true",
         help=(
@@ -84,6 +90,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "-V",
         "--version",
         action="version",
         version="%(prog)s " + version("morphace"),

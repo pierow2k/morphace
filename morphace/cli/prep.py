@@ -22,7 +22,10 @@ logger = logging.getLogger(__name__)
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Align faces from input images",
+        description=(
+            "Detect faces in raw images and prepare aligned square PNG crops "
+            "for morphing."
+        ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -35,48 +38,68 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Directory for storing aligned images (default: raw_dir/cropped)",
     )
     parser.add_argument(
+        "-l",
         "--landmark-model",
         type=Path,
         default=None,
-        help=("Path to shape_predictor_68_face_landmarks.dat."),
+        help=(
+            "Path to shape_predictor_68_face_landmarks.dat. "
+            "If omitted, morphace checks MORPHACE_LANDMARK_MODEL "
+            "and then the default user data directory."
+        ),
     )
     parser.add_argument(
+        "-s",
         "--output-size",
         default=1024,
-        help="The dimension of images for input to the model",
+        help="Pixel dimension of the output square crop",
         type=int,
     )
     parser.add_argument(
+        "-f",
         "--overwrite",
         default=False,
         help="Overwrite existing aligned images",
         action="store_true",
     )
     parser.add_argument(
+        "-e",
         "--em-scale",
         default=0.1,
-        help="Scaling factor for eye-mouth distance",
+        help="Shift crop center from eyes toward mouth",
         type=float,
     )
     parser.add_argument(
+        "-x",
         "--x-scale",
         default=1.0,
-        help="Scaling factor for x dimension",
+        help=(
+            "Horizontal crop extent around face; >1.0 includes more "
+            "context, <1.0 crops tighter"
+        ),
         type=float,
     )
     parser.add_argument(
+        "-y",
         "--y-scale",
         default=1.0,
-        help="Scaling factor for y dimension",
+        help=(
+            "Vertical crop extent around face; >1.0 includes more "
+            "context, <1.0 crops tighter"
+        ),
         type=float,
     )
     parser.add_argument(
+        "-a",
         "--alpha",
         default=False,
-        help="Add an alpha channel for masking",
+        help=(
+            "Use alpha channel for padded regions instead of reflected padding"
+        ),
         action="store_true",
     )
     parser.add_argument(
+        "-V",
         "--version",
         action="version",
         version="%(prog)s " + version("morphace"),
