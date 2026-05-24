@@ -50,6 +50,7 @@ def test_video_writer_context_builds_ffmpeg_command(
         frame_rate=3,
         size=(8, 10),
         output="out.mp4",
+        ffmpeg_loglevel="info",
     )
     with video.video_writer_context(config) as (stdin, num_images):
         assert stdin is process.stdin
@@ -60,7 +61,7 @@ def test_video_writer_context_builds_ffmpeg_command(
         "ffmpeg",
         "-hide_banner",
         "-loglevel",
-        "error",
+        "info",
         "-y",
         "-f",
         "image2pipe",

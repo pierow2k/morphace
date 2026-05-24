@@ -75,6 +75,47 @@ def test_main_builds_morph_config(monkeypatch: pytest.MonkeyPatch) -> None:
     assert captured["workflow"][3] is True
 
 
+def test_main_sets_verbose_ffmpeg_loglevel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify the CLI can request FFmpeg informational output."""
+    captured: dict[str, Any] = {}
+
+    def fake_imread(path: str) -> np.ndarray:
+        """Return a fake image."""
+        del path
+        return _image()
+
+    def fake_resolve_landmark_model_path(model_path: Path | None) -> Path:
+        """Return a fake resolved landmark model path."""
+        del model_path
+        return Path("resolved_shape_predictor.dat")
+
+    def fake_morph_faces(
+        image1: np.ndarray,
+        image2: np.ndarray,
+        config: MorphConfig,
+        show_triangles: bool = False,
+    ) -> Path:
+        """Capture the workflow call."""
+        del image1, image2, show_triangles
+        captured["config"] = config
+        return Path(config.output)
+
+    monkeypatch.setattr(morph.cv2, "imread", fake_imread)
+    monkeypatch.setattr(
+        morph,
+        "resolve_landmark_model_path",
+        fake_resolve_landmark_model_path,
+    )
+    monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
+
+    result = morph.main(["first.png", "second.png", "--show-ffmpeg-output"])
+
+    assert result == 0
+    assert captured["config"].ffmpeg_loglevel == "info"
+
+
 @pytest.mark.parametrize("args", [["--duration", "0"], ["--fps", "0"]])
 def test_main_rejects_non_positive_timing(args: list[str]) -> None:
     """Verify invalid duration or FPS exits before image processing."""

@@ -7,8 +7,6 @@ from typing import IO
 
 from .config import MorphVideoConfig
 
-LOGLEVEL = "error"
-
 
 @contextmanager
 def video_writer_context(
@@ -34,7 +32,7 @@ def video_writer_context(
             "ffmpeg",
             "-hide_banner",
             "-loglevel",
-            LOGLEVEL,
+            config.ffmpeg_loglevel,
             "-y",
             "-f",
             "image2pipe",

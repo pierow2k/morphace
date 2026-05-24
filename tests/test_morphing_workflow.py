@@ -93,6 +93,7 @@ def test_morph_faces_uses_named_correspondence_fields(
             frame_rate=10,
             output="out.mp4",
             landmark_model_path=Path("model.dat"),
+            ffmpeg_loglevel="info",
         ),
         show_triangles=True,
     )
@@ -111,5 +112,6 @@ def test_morph_faces_uses_named_correspondence_fields(
         frame_rate=10,
         size=(4, 4),
         output="out.mp4",
+        ffmpeg_loglevel="info",
     )
     assert sequence[4] is True
