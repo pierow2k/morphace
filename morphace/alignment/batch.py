@@ -28,13 +28,13 @@ class AlignmentConfig:
     """Configuration for the image alignment pipeline.
 
     Attributes:
-        raw_dir: Directory containing source images.
+        source_dir: Directory containing source images.
         aligned_dir: Directory where aligned images are written.
         landmark_model_path: Path to the dlib landmark predictor model.
         face_alignment: Options used when aligning each detected face.
     """
 
-    raw_dir: Path
+    source_dir: Path
     aligned_dir: Path
     landmark_model_path: Path
     face_alignment: FaceAlignmentOptions = field(
@@ -100,7 +100,7 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
 
     Writes one aligned image per detected face to `config.aligned_dir`,
     creating the directory if it does not exist. Only immediate children of
-    `config.raw_dir` with recognized image extensions are processed;
+    `config.source_dir` with recognized image extensions are processed;
     subdirectories are ignored. Existing outputs are skipped unless
     `overwrite` is true. Detection and alignment failures for individual
     images are logged and do not stop the whole run.
@@ -115,7 +115,7 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
     # If AlignmentConfig.aligned_dir does not exist, create it.
     config.aligned_dir.mkdir(parents=True, exist_ok=True)
 
-    for raw_img_path in config.raw_dir.iterdir():
+    for raw_img_path in config.source_dir.iterdir():
         # Skip directories and non-image files
         if (
             not raw_img_path.is_file()

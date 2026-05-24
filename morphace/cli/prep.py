@@ -29,13 +29,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "raw_dir", help="Directory with raw images for face alignment"
+        "source_dir", help="Directory with raw images for face alignment"
     )
     parser.add_argument(
         "aligned_dir",
         nargs="?",
         default=argparse.SUPPRESS,
-        help="Directory for storing aligned images (default: raw_dir/cropped)",
+        help=(
+            "Directory for storing aligned images (default: source_dir/cropped)"
+        ),
     )
     parser.add_argument(
         "-l",
@@ -112,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
     if not hasattr(args, "aligned_dir"):
-        args.aligned_dir = Path(args.raw_dir) / "cropped"
+        args.aligned_dir = Path(args.source_dir) / "cropped"
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -123,7 +125,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     config = AlignmentConfig(
-        raw_dir=Path(args.raw_dir),
+        source_dir=Path(args.source_dir),
         aligned_dir=Path(args.aligned_dir),
         landmark_model_path=landmark_model_path,
         face_alignment=FaceAlignmentOptions(
