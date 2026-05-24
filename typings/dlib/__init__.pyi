@@ -4,6 +4,8 @@ from typing import Any
 
 from numpy.typing import NDArray
 
+# ruff: noqa: N801
+
 class point:
     x: int
     y: int
