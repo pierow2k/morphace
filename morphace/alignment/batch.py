@@ -1,8 +1,9 @@
-"""Align faces and produce cropped images from a directory of raw images.
+"""Align faces and produce cropped images from raw image sources.
 
 Detects each face in each source image, delegates to `align_face_image` to
 align and crop the face, and saves the result in the output directory with
-the face number appended to the filename.
+the face number appended to the filename. The source may be a directory of
+images or a single image file.
 """
 
 # pylint: disable=broad-exception-caught
@@ -28,7 +29,7 @@ class AlignmentConfig:
     """Configuration for the image alignment pipeline.
 
     Attributes:
-        source: Directory containing source images.
+        source: Directory containing source images or a single image file.
         aligned_dir: Directory where aligned images are written.
         landmark_model_path: Path to the dlib landmark predictor model.
         face_alignment: Options used when aligning each detected face.
@@ -65,6 +66,25 @@ def _should_skip_existing(
     return False
 
 
+def _source_image_paths(source: Path) -> list[Path]:
+    """Return source image paths selected for alignment."""
+    if source.is_file():
+        if source.suffix.lower() in IMAGE_EXTENSIONS:
+            return [source]
+        return []
+
+    if source.is_dir():
+        return [
+            path
+            for path in source.iterdir()
+            if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
+        ]
+
+    raise ValueError(
+        f"Source path does not exist or is not accessible: {source}"
+    )
+
+
 def _align_detected_faces(
     config: AlignmentConfig,
     raw_img_path: Path,
@@ -99,29 +119,26 @@ def align_faces(config: AlignmentConfig, overwrite: bool = False) -> None:
     """Produce aligned face crops from raw images.
 
     Writes one aligned image per detected face to `config.aligned_dir`,
-    creating the directory if it does not exist. Only immediate children of
-    `config.source` with recognized image extensions are processed;
-    subdirectories are ignored. Existing outputs are skipped unless
-    `overwrite` is true. Detection and alignment failures for individual
-    images are logged and do not stop the whole run.
+    creating the directory if it does not exist. When `config.source` is a
+    directory, only immediate children with recognized image extensions are
+    processed and subdirectories are ignored. When `config.source` is a file,
+    it is processed only if its extension is recognized. Existing outputs are
+    skipped unless `overwrite` is true. Detection and alignment failures for
+    individual images are logged and do not stop the whole run.
 
     Args:
         config: Pipeline configuration options.
         overwrite: Whether to overwrite existing aligned images.
     """
-    detector = get_detector()
-    predictor = get_predictor(config.landmark_model_path)
+    source_image_paths = _source_image_paths(config.source)
 
     # If AlignmentConfig.aligned_dir does not exist, create it.
     config.aligned_dir.mkdir(parents=True, exist_ok=True)
 
-    for raw_img_path in config.source.iterdir():
-        # Skip directories and non-image files
-        if (
-            not raw_img_path.is_file()
-            or raw_img_path.suffix.lower() not in IMAGE_EXTENSIONS
-        ):
-            continue
+    detector = get_detector()
+    predictor = get_predictor(config.landmark_model_path)
+
+    for raw_img_path in source_image_paths:
         logger.info("Aligning %s ...", raw_img_path.name)
         try:
             if _should_skip_existing(config, raw_img_path, overwrite):

@@ -74,8 +74,11 @@ def test_main_builds_alignment_config(
 
 def test_main_defaults_aligned_dir_to_raw_cropped(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
-    """Verify prep CLI derives a default output directory."""
+    """Verify prep CLI defaults directory source output to cropped."""
+    source_dir = tmp_path / "raw"
+    source_dir.mkdir()
     captured_configs: list[AlignmentConfig] = []
 
     def fake_align_faces(
@@ -100,10 +103,87 @@ def test_main_defaults_aligned_dir_to_raw_cropped(
         fake_resolve_landmark_model_path,
     )
 
-    result = prep.main(["raw", "--overwrite"])
+    result = prep.main([str(source_dir), "--overwrite"])
 
     assert result == 0
-    assert captured_configs[0].aligned_dir == Path("raw") / "cropped"
+    assert captured_configs[0].aligned_dir == source_dir / "cropped"
+
+
+def test_main_defaults_aligned_dir_to_image_parent(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify prep CLI defaults file source output to its parent."""
+    source_file = tmp_path / "face.png"
+    source_file.write_bytes(b"not a real image")
+    captured_configs: list[AlignmentConfig] = []
+
+    def fake_align_faces(
+        config: AlignmentConfig,
+        overwrite: bool = False,
+    ) -> None:
+        """Capture the defaulted prep configuration."""
+        assert overwrite is False
+        captured_configs.append(config)
+
+    def fake_resolve_landmark_model_path(
+        model_path: Path | None,
+    ) -> Path:
+        """Return a resolved model path without filesystem access."""
+        assert model_path is None
+        return Path("resolved_shape_predictor.dat")
+
+    monkeypatch.setattr(prep, "align_faces", fake_align_faces)
+    monkeypatch.setattr(
+        prep,
+        "resolve_landmark_model_path",
+        fake_resolve_landmark_model_path,
+    )
+
+    result = prep.main([str(source_file)])
+
+    assert result == 0
+    assert captured_configs[0].source == source_file
+    assert captured_configs[0].aligned_dir == tmp_path
+
+
+def test_main_uses_explicit_aligned_dir_for_file_source(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Verify explicit prep output wins for a file source."""
+    source_file = tmp_path / "face.png"
+    aligned_dir = tmp_path / "aligned"
+    source_file.write_bytes(b"not a real image")
+    captured_configs: list[AlignmentConfig] = []
+
+    def fake_align_faces(
+        config: AlignmentConfig,
+        overwrite: bool = False,
+    ) -> None:
+        """Capture the parsed prep configuration."""
+        assert overwrite is False
+        captured_configs.append(config)
+
+    def fake_resolve_landmark_model_path(
+        model_path: Path | None,
+    ) -> Path:
+        """Return a resolved model path without filesystem access."""
+        assert model_path is None
+        return Path("resolved_shape_predictor.dat")
+
+    monkeypatch.setattr(prep, "align_faces", fake_align_faces)
+    monkeypatch.setattr(
+        prep,
+        "resolve_landmark_model_path",
+        fake_resolve_landmark_model_path,
+    )
+
+    result = prep.main([str(source_file), str(aligned_dir)])
+
+    assert result == 0
+    assert captured_configs[0].source == source_file
+    assert captured_configs[0].aligned_dir == aligned_dir
 
 
 def test_main_returns_error_when_model_is_missing(
