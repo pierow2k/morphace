@@ -1,89 +1,86 @@
-"""Tests for shared dlib landmark detection helpers."""
+"""Tests for dlib landmark model resolution."""
 
-from typing import TYPE_CHECKING, Any, cast
+from pathlib import Path
+from unittest.mock import patch
 
-import numpy as np
 import pytest
 
-from morphace import landmarks
-
-if TYPE_CHECKING:
-    import dlib
-
-EXPECTED_FACE_COUNT = 2
-
-
-class _Point:
-    """Fake dlib point."""
-
-    def __init__(self, x: int, y: int) -> None:
-        self.x = x
-        self.y = y
+from morphace.landmarks import (
+    MODEL_ENV_VAR,
+    LandmarkModelNotFoundError,
+    resolve_landmark_model_path,
+)
 
 
-class _Shape:
-    """Fake dlib full object detection."""
-
-    def __init__(self, points: list[_Point]) -> None:
-        self._points = points
-
-    def parts(self) -> list[_Point]:
-        """Return fake landmark points."""
-        return self._points
-
-
-class _Predictor:
-    """Fake dlib shape predictor."""
-
-    def __init__(self) -> None:
-        self.seen_rects: list[object] = []
-
-    def __call__(self, image: Any, rect: object) -> _Shape:
-        """Return a shape whose coordinates depend on the rectangle."""
-        del image
-        self.seen_rects.append(rect)
-        index = len(self.seen_rects)
-        return _Shape([_Point(index, index + 1), _Point(index + 2, index + 3)])
+def test_resolve_landmark_model_path_from_argument() -> None:
+    """Test resolution when an explicit path is provided."""
+    custom_path = "/path/to/model.dat"
+    with (
+        patch.object(Path, "is_file", return_value=True),
+        patch.object(Path, "expanduser", return_value=Path(custom_path)),
+    ):
+        result = resolve_landmark_model_path(custom_path)
+        assert result == Path(custom_path)
 
 
-def _empty_detector(image: Any, upsample_num_times: int) -> list[object]:
-    """Return no face detections."""
-    del image, upsample_num_times
-    return []
+def test_resolve_landmark_model_path_argument_not_found() -> None:
+    """Test error when the provided explicit path does not exist."""
+    with (
+        patch.object(Path, "is_file", return_value=False),
+        pytest.raises(LandmarkModelNotFoundError, match="--landmark-model"),
+    ):
+        resolve_landmark_model_path("/missing/path.dat")
 
 
-def _multi_face_detector(image: Any, upsample_num_times: int) -> list[object]:
-    """Return two fake face detections."""
-    del image, upsample_num_times
-    return [object(), object()]
+def test_resolve_landmark_model_path_from_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test resolution via environment variable."""
+    env_path = "/env/path/model.dat"
+    monkeypatch.setenv(MODEL_ENV_VAR, env_path)
+
+    with (
+        patch.object(Path, "is_file", return_value=True),
+        patch.object(Path, "expanduser", return_value=Path(env_path)),
+    ):
+        result = resolve_landmark_model_path()
+        assert result == Path(env_path)
 
 
-def test_detect_all_landmarks_raises_no_face_error() -> None:
-    """Verify no-face detection raises the shared public exception."""
-    image = np.zeros((8, 8, 3), dtype=np.uint8)
+def test_resolve_landmark_model_path_from_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test resolution via default user data directory."""
+    # Ensure env var doesn't interfere
+    monkeypatch.delenv(MODEL_ENV_VAR, raising=False)
+    default_path = Path("/default/user/path/model.dat")
 
-    with pytest.raises(landmarks.NoFaceFoundError):
-        next(
-            landmarks.detect_all_landmarks(
-                image,
-                _empty_detector,
-                cast("dlib.shape_predictor", _Predictor()),
-            )
-        )
+    with (
+        patch(
+            "morphace.landmarks.default_landmark_model_path",
+            return_value=default_path,
+        ),
+        patch.object(Path, "is_file", return_value=True),
+    ):
+        result = resolve_landmark_model_path()
+        assert result == default_path
 
 
-def test_detect_all_landmarks_yields_each_face_coordinates() -> None:
-    """Verify all detections are converted into coordinate lists."""
-    image = np.zeros((8, 8, 3), dtype=np.uint8)
-    predictor = _Predictor()
+def test_resolve_landmark_model_path_all_fail(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test error when no model can be found anywhere."""
+    monkeypatch.delenv(MODEL_ENV_VAR, raising=False)
 
-    detected_landmarks = list(
-        landmarks.detect_all_landmarks(
-            image,
-            _multi_face_detector,
-            cast("dlib.shape_predictor", predictor),
-        )
-    )
-
-    assert detected_landmarks == [[(1, 2), (3, 4)], [(2, 3), (4, 5)]]
-    assert len(predictor.seen_rects) == EXPECTED_FACE_COUNT
+    # Mock default path to something specific so we can verify the error message
+    mock_default = Path("/app/data/model.dat")
+    with (
+        patch(
+            "morphace.landmarks.default_landmark_model_path",
+            return_value=mock_default,
+        ),
+        patch.object(Path, "is_file", return_value=False),
+    ):
+        with pytest.raises(LandmarkModelNotFoundError) as exc_info:
+            resolve_landmark_model_path()
+        assert str(mock_default) in str(exc_info.value)
