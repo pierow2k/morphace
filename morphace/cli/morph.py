@@ -36,11 +36,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "img1",
-        help="Path to the first image",
+        help="Path to the first face image",
     )
     parser.add_argument(
         "img2",
-        help="Path to the second image",
+        help="Path to the second face image",
     )
     parser.add_argument(
         "-l",
@@ -57,28 +57,29 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-o",
         "--output",
         default="morph.mp4",
-        help="Path to save the output video (default: %(default)s)",
+        help="Path for the output MP4 video (default: %(default)s)",
     )
     parser.add_argument(
         "-d",
         "--duration",
         type=int,
         default=5,
-        help="Duration of the morph in seconds (default: %(default)s)",
+        help="Duration of the morph video in seconds (default: %(default)s)",
     )
     parser.add_argument(
         "-r",
         "--fps",
         type=int,
         default=30,
-        help="Frame rate (FPS) (default: %(default)s)",
+        help="Frames per second for the output video (default: %(default)s)",
     )
     parser.add_argument(
         "-m",
         "--show-mesh",
         action="store_true",
         default=False,
-        help="Show the triangle mesh overlay in the output video.",
+        help="Draw triangle mesh overlay to visualize face geometry warping"
+        " (default: %(default)s)",
     )
     parser.add_argument(
         "-v",
