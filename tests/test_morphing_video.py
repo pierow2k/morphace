@@ -60,7 +60,7 @@ def test_video_writer_context_builds_ffmpeg_command(
         "ffmpeg",
         "-hide_banner",
         "-loglevel",
-        "warning",
+        "error",
         "-y",
         "-f",
         "image2pipe",
