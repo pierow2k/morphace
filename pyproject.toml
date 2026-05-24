@@ -47,7 +47,7 @@ testpaths = ["tests"]
 addopts = [
   "--cov=morphace",
   "--cov-branch",
-  "--cov-report=term-missing:skip-covered",
+  # "--cov-report=term-missing:skip-covered",
   "--cov-report=html",
 ]
 
@@ -57,7 +57,7 @@ source = ["morphace"]
 
 [tool.coverage.report]
 show_missing = true
-skip_covered = true
+# skip_covered = true
 skip_empty = true
 exclude_also = [
   "if TYPE_CHECKING:",
