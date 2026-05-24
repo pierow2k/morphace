@@ -13,11 +13,11 @@ def test_align_faces_uses_shared_model_helpers(
     tmp_path: Path,
 ) -> None:
     """Verify prep alignment uses shared detector and predictor helpers."""
-    raw_dir = tmp_path / "raw"
+    source_dir = tmp_path / "raw"
     aligned_dir = tmp_path / "aligned"
-    raw_dir.mkdir()
+    source_dir.mkdir()
     aligned_dir.mkdir()
-    raw_img_path = raw_dir / "face.png"
+    raw_img_path = source_dir / "face.png"
     raw_img_path.write_bytes(b"not a real image")
 
     detector = object()
@@ -69,7 +69,7 @@ def test_align_faces_uses_shared_model_helpers(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            raw_dir=raw_dir,
+            source_dir=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
             face_alignment=FaceAlignmentOptions(
@@ -104,7 +104,7 @@ def test_alignment_config_uses_default_face_alignment_options(
 ) -> None:
     """Verify image prep defaults to standard face alignment options."""
     config = batch.AlignmentConfig(
-        raw_dir=tmp_path / "raw",
+        source_dir=tmp_path / "raw",
         aligned_dir=tmp_path / "aligned",
         landmark_model_path=Path("resolved_model.dat"),
     )
@@ -117,11 +117,11 @@ def test_align_faces_skips_existing_output_without_overwrite(
     tmp_path: Path,
 ) -> None:
     """Verify existing first-face output skips landmark detection."""
-    raw_dir = tmp_path / "raw"
+    source_dir = tmp_path / "raw"
     aligned_dir = tmp_path / "aligned"
-    raw_dir.mkdir()
+    source_dir.mkdir()
     aligned_dir.mkdir()
-    raw_img_path = raw_dir / "face.png"
+    raw_img_path = source_dir / "face.png"
     raw_img_path.write_bytes(b"not a real image")
     (aligned_dir / "face_face01.png").write_bytes(b"existing")
     called_get_landmarks = False
@@ -148,7 +148,7 @@ def test_align_faces_skips_existing_output_without_overwrite(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            raw_dir=raw_dir,
+            source_dir=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
@@ -162,12 +162,12 @@ def test_align_faces_ignores_directories_and_non_images(
     tmp_path: Path,
 ) -> None:
     """Verify only recognized image files are sent to detection."""
-    raw_dir = tmp_path / "raw"
+    source_dir = tmp_path / "raw"
     aligned_dir = tmp_path / "aligned"
-    raw_dir.mkdir()
-    (raw_dir / "nested").mkdir()
-    (raw_dir / "notes.txt").write_text("not an image", encoding="utf-8")
-    image_path = raw_dir / "face.JPEG"
+    source_dir.mkdir()
+    (source_dir / "nested").mkdir()
+    (source_dir / "notes.txt").write_text("not an image", encoding="utf-8")
+    image_path = source_dir / "face.JPEG"
     image_path.write_bytes(b"not a real image")
     processed: list[Path] = []
 
@@ -200,7 +200,7 @@ def test_align_faces_ignores_directories_and_non_images(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            raw_dir=raw_dir,
+            source_dir=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
@@ -214,9 +214,9 @@ def test_align_detected_faces_logs_alignment_failures(
     tmp_path: Path,
 ) -> None:
     """Verify a single face alignment failure does not stop the loop."""
-    raw_dir = tmp_path / "raw"
-    raw_dir.mkdir()
-    raw_img_path = raw_dir / "face.png"
+    source_dir = tmp_path / "raw"
+    source_dir.mkdir()
+    raw_img_path = source_dir / "face.png"
     raw_img_path.write_bytes(b"not a real image")
     aligned_dir = tmp_path / "aligned"
     face_landmarks = [(float(index), float(index)) for index in range(68)]
@@ -259,7 +259,7 @@ def test_align_detected_faces_logs_alignment_failures(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            raw_dir=raw_dir,
+            source_dir=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
@@ -276,11 +276,11 @@ def test_align_faces_logs_landmark_detection_failures(
     tmp_path: Path,
 ) -> None:
     """Verify one image-level failure does not stop batch processing."""
-    raw_dir = tmp_path / "raw"
+    source_dir = tmp_path / "raw"
     aligned_dir = tmp_path / "aligned"
-    raw_dir.mkdir()
-    first_image = raw_dir / "first.png"
-    second_image = raw_dir / "second.png"
+    source_dir.mkdir()
+    first_image = source_dir / "first.png"
+    second_image = source_dir / "second.png"
     first_image.write_bytes(b"not a real image")
     second_image.write_bytes(b"not a real image")
     processed: list[Path] = []
@@ -316,7 +316,7 @@ def test_align_faces_logs_landmark_detection_failures(
 
     batch.align_faces(
         batch.AlignmentConfig(
-            raw_dir=raw_dir,
+            source_dir=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
         )
