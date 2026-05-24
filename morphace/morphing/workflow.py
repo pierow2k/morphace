@@ -66,6 +66,7 @@ def morph_faces(
             frame_rate=config.frame_rate,
             size=correspondences.size,
             output=config.output,
+            ffmpeg_loglevel=config.ffmpeg_loglevel,
         ),
         show_triangles,
     )

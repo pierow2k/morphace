@@ -15,12 +15,14 @@ class MorphConfig:
         frame_rate: Number of frames per second.
         output: Path to save the output video.
         landmark_model_path: Path to the dlib landmark model.
+        ffmpeg_loglevel: FFmpeg logging verbosity.
     """
 
     duration: int
     frame_rate: int
     output: str
     landmark_model_path: Path
+    ffmpeg_loglevel: str = "error"
 
 
 @dataclass(frozen=True)
@@ -32,9 +34,11 @@ class MorphVideoConfig:
         frame_rate: Number of frames per second.
         size: Frame size as ``(height, width)``.
         output: Path to save the output video.
+        ffmpeg_loglevel: FFmpeg logging verbosity.
     """
 
     duration: int
     frame_rate: int
     size: Size
     output: str
+    ffmpeg_loglevel: str = "error"

@@ -48,7 +48,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help=(
             "Path to shape_predictor_68_face_landmarks.dat. "
-            "If omitted, the app checks MORPHACE_LANDMARK_MODEL "
+            "If omitted, morphace checks MORPHACE_LANDMARK_MODEL "
             "and then the default user data directory."
         ),
     )
@@ -74,6 +74,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         default=False,
         help="Show the triangle mesh overlay in the output video.",
+    )
+    parser.add_argument(
+        "--show-ffmpeg-output",
+        action="store_true",
+        help=(
+            "Show FFmpeg informational output while encoding. "
+            "(default: only show FFmpeg errors)"
+        ),
     )
     parser.add_argument(
         "--version",
@@ -109,6 +117,8 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("Duration and frame rate must be positive integers.")
         return 1
 
+    ffmpeg_loglevel = "info" if args.show_ffmpeg_output else "error"
+
     images = _read_input_images(args)
     if images is None:
         return 1
@@ -128,6 +138,7 @@ def main(argv: list[str] | None = None) -> int:
         frame_rate=args.fps,
         output=args.output,
         landmark_model_path=landmark_model_path,
+        ffmpeg_loglevel=ffmpeg_loglevel,
     )
 
     try:
