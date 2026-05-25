@@ -17,10 +17,12 @@ class _FakeProcess:
     def __init__(
         self,
         stdin: io.BytesIO | None = None,
+        stderr: io.BytesIO | None = None,
         returncode: int = 0,
     ) -> None:
         """Initialize the fake process."""
         self.stdin = stdin
+        self.stderr = stderr
         self.returncode = returncode
         self.wait_called = False
 
@@ -37,10 +39,10 @@ def test_video_writer_context_builds_ffmpeg_command(
     process = _FakeProcess(stdin=io.BytesIO())
     captured: dict[str, Any] = {}
 
-    def fake_popen(command: list[str], stdin: int) -> _FakeProcess:
+    def fake_popen(command: list[str], **kwargs: Any) -> _FakeProcess:
         """Capture the ffmpeg command."""
         captured["command"] = command
-        captured["stdin"] = stdin
+        captured.update(kwargs)
         return process
 
     monkeypatch.setattr(video, "Popen", fake_popen)
@@ -57,6 +59,7 @@ def test_video_writer_context_builds_ffmpeg_command(
         assert num_images == 6  # noqa:PLR2004
 
     assert captured["stdin"] == video.PIPE
+    assert captured["stderr"] == video.PIPE
     assert captured["command"] == [
         "ffmpeg",
         "-hide_banner",
@@ -92,9 +95,9 @@ def test_video_writer_context_requires_stdin(
     """Verify missing ffmpeg stdin is reported as a runtime failure."""
     process = _FakeProcess(stdin=None)
 
-    def fake_popen(command: list[str], stdin: int) -> _FakeProcess:
+    def fake_popen(command: list[str], **kwargs: Any) -> _FakeProcess:
         """Return a process without stdin."""
-        del command, stdin
+        del command, kwargs
         return process
 
     monkeypatch.setattr(video, "Popen", fake_popen)
@@ -112,9 +115,9 @@ def test_video_writer_context_converts_broken_pipe(
     """Verify ffmpeg pipe failures are converted to RuntimeError."""
     process = _FakeProcess(stdin=io.BytesIO())
 
-    def fake_popen(command: list[str], stdin: int) -> _FakeProcess:
+    def fake_popen(command: list[str], **kwargs: Any) -> _FakeProcess:
         """Return a writable fake process."""
-        del command, stdin
+        del command, kwargs
         return process
 
     monkeypatch.setattr(video, "Popen", fake_popen)
@@ -136,9 +139,9 @@ def test_video_writer_context_reports_nonzero_exit(
     """Verify ffmpeg nonzero exits fail after stream cleanup."""
     process = _FakeProcess(stdin=io.BytesIO(), returncode=2)
 
-    def fake_popen(command: list[str], stdin: int) -> _FakeProcess:
+    def fake_popen(command: list[str], **kwargs: Any) -> _FakeProcess:
         """Return a process configured to fail on wait."""
-        del command, stdin
+        del command, kwargs
         return process
 
     monkeypatch.setattr(video, "Popen", fake_popen)
