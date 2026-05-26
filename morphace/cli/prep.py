@@ -41,11 +41,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-a",
         "--alpha",
+        action="store_true",
         default=False,
         help=(
             "Use alpha channel for padded regions instead of reflected padding"
         ),
-        action="store_true",
     )
     parser.add_argument(
         "--debug",
@@ -70,13 +70,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-l",
         "--landmark-model",
-        type=Path,
         default=None,
         help=(
             "Path to shape_predictor_68_face_landmarks.dat. "
             "If omitted, morphace checks MORPHACE_LANDMARK_MODEL "
             "and then the default user data directory."
         ),
+        type=Path,
     )
     parser.add_argument(
         "-s",
