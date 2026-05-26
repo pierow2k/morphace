@@ -56,6 +56,11 @@ def morph_faces(
     )
 
     logger.info("Generating video...")
+    logger.debug(
+        "correspondences.size (w x h): %s x %s",
+        correspondences.size[1],
+        correspondences.size[0],
+    )
 
     generate_morph_sequence(
         (correspondences.image1, correspondences.image2),
