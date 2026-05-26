@@ -49,7 +49,7 @@ def _center_crop(img: ImageArray, target_h: int, target_w: int) -> ImageArray:
     return img[start_h : start_h + target_h, start_w : start_w + target_w]
 
 
-def match_image_sizes(img1: ImageArray, img2: ImageArray) -> ImagePair:
+def _match_image_sizes(img1: ImageArray, img2: ImageArray) -> ImagePair:
     """Resizes and crops two images so they have matching dimensions.
 
     Strategy: If one image is smaller in both dimensions, the larger image
@@ -137,7 +137,7 @@ def align_faces(
         raise RuntimeError("Dlib models are not loaded. Cannot process faces.")
 
     # Crop images to matching dimensions.
-    img_list = match_image_sizes(image1, image2)
+    img_list = _match_image_sizes(image1, image2)
     img1_cropped, img2_cropped = img_list
 
     # Initialize storage

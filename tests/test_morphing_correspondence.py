@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from morphace.morphing import correspondence
-from morphace.morphing.correspondence import align_faces, match_image_sizes
+from morphace.morphing.correspondence import _match_image_sizes, align_faces
 
 
 def test_match_image_sizes_downscales_larger_image() -> None:
@@ -15,7 +15,7 @@ def test_match_image_sizes_downscales_larger_image() -> None:
     image1 = np.zeros((4, 6, 3), dtype=np.uint8)
     image2 = np.zeros((8, 12, 3), dtype=np.uint8)
 
-    matched1, matched2 = match_image_sizes(image1, image2)
+    matched1, matched2 = _match_image_sizes(image1, image2)
 
     assert matched1.shape == (4, 6, 3)
     assert matched2.shape == (4, 6, 3)
@@ -26,7 +26,7 @@ def test_match_image_sizes_downscales_img1_when_img2_smaller() -> None:
     image1 = np.zeros((8, 12, 3), dtype=np.uint8)
     image2 = np.zeros((4, 6, 3), dtype=np.uint8)
 
-    matched1, matched2 = match_image_sizes(image1, image2)
+    matched1, matched2 = _match_image_sizes(image1, image2)
 
     assert matched1.shape == (4, 6, 3)
     assert matched2.shape == (4, 6, 3)
@@ -37,7 +37,7 @@ def test_match_image_sizes_crops_mixed_dimensions() -> None:
     image1 = np.zeros((4, 10, 3), dtype=np.uint8)
     image2 = np.zeros((8, 6, 3), dtype=np.uint8)
 
-    matched1, matched2 = match_image_sizes(image1, image2)
+    matched1, matched2 = _match_image_sizes(image1, image2)
 
     assert matched1.shape == (4, 6, 3)
     assert matched2.shape == (4, 6, 3)
