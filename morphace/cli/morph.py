@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Generate a face morphing video."
+        description="Generate a face morphing video.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "img1",
@@ -57,7 +58,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-o",
         "--output",
         default="morph.mp4",
-        help="Path for the output MP4 video (default: %(default)s)",
+        help="Path for the output MP4 video",
     )
     parser.add_argument(
         "--debug",
@@ -69,27 +70,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--duration",
         type=int,
         default=5,
-        help="Duration of the morph video in seconds (default: %(default)s)",
+        help="Duration of the morph video in seconds",
     )
     parser.add_argument(
         "-r",
         "--fps",
         type=int,
         default=30,
-        help="Frames per second for the output video (default: %(default)s)",
+        help="Frames per second for the output video",
     )
     parser.add_argument(
         "-m",
         "--show-mesh",
         action="store_true",
         default=False,
-        help="Draw triangle mesh overlay to visualize face geometry warping"
-        " (default: %(default)s)",
+        help="Draw triangle mesh overlay to visualize face geometry warping",
     )
     parser.add_argument(
         "-v",
         "--show-ffmpeg-output",
         action="store_true",
+        default=argparse.SUPPRESS,
         help=(
             "Show FFmpeg informational output while encoding. "
             "(default: only show FFmpeg errors)"
@@ -138,7 +139,9 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("Duration and frame rate must be positive integers.")
         return 1
 
-    ffmpeg_loglevel = "info" if args.show_ffmpeg_output else "error"
+    ffmpeg_loglevel = (
+        "info" if getattr(args, "show_ffmpeg_output", False) else "error"
+    )
 
     images = _read_input_images(args)
     if images is None:
