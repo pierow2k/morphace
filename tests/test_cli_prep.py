@@ -103,7 +103,7 @@ def test_main_defaults_aligned_dir_to_raw_cropped(
         fake_resolve_landmark_model_path,
     )
 
-    result = prep.main([str(source_dir), "--overwrite"])
+    result = prep.main([str(source_dir), "--force"])
 
     assert result == 0
     assert captured_configs[0].aligned_dir == source_dir / "cropped"
