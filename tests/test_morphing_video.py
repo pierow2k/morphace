@@ -71,7 +71,7 @@ def test_video_writer_context_builds_ffmpeg_command(
         "-r",
         "3",
         "-s",
-        "8x10",
+        "10x8",
         "-i",
         "-",
         "-c:v",
