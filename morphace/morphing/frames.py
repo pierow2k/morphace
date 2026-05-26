@@ -226,21 +226,42 @@ def generate_morph_sequence(
     video_config: MorphVideoConfig,
     show_triangles: bool,
 ) -> None:
-    """Generates a face morphing sequence and saves it as a video."""
+    """Generates a face morphing sequence and writes it to a video file.
+
+    This function orchestrates the morphing workflow by iterating through the
+    required number of frames, calculating intermediate morph states, and
+    streaming raw video frames to an FFmpeg subprocess managed by
+    `video_writer_context`.
+
+    Args:
+        img_pair: A tuple containing the source and destination images.
+        points_pair: A tuple containing facial landmarks for both images.
+        tri_list: The Delaunay triangulation list used for warping.
+        video_config: Configuration object defining video output settings.
+        show_triangles: If True, renders the triangulation mesh over the
+            frames.
+
+    Returns:
+        None. The output is written to a file via the video writer context.
+    """
     img1, img2 = img_pair
     points1, points2 = points_pair
 
-    # Pre-processing
+    # Convert images and landmarks to float32 for high-precision arithmetic
+    # during the warping and interpolation process.
     img1_float = np.asarray(img1, dtype=np.float32)
     img2_float = np.asarray(img2, dtype=np.float32)
     p1_arr = np.array(points1, dtype=np.float32)
     p2_arr = np.array(points2, dtype=np.float32)
 
     with video_writer_context(video_config) as (stdin, num_images):
-        for j in range(num_images):
-            alpha = j / max(1, num_images - 1)
+        for frame_index in range(num_images):
+            # Calculate the interpolation factor (0.0 to 1.0).
+            # alpha=0.0 yields the source image; alpha=1.0 yields
+            # the destination.
+            alpha = frame_index / max(1, num_images - 1)
 
-            # Logic is delegated to the helper
+            # Generate the intermediate morph frame.
             frame = generate_morph_frame(
                 img1_float,
                 img2_float,
@@ -254,5 +275,6 @@ def generate_morph_sequence(
             # Ensure array is uint8
             frame_uint8 = np.asarray(frame, dtype=np.uint8)
 
-            # Write raw bytes directly to stdin
+            # Convert frame to uint8 (standard byte format for images).
+            # The resulting bytes (BGR order) are streamed directly to FFmpeg.
             stdin.write(frame_uint8.tobytes())
