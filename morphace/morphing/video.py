@@ -17,82 +17,82 @@ def video_writer_context(
 ) -> Iterator[tuple[IO[bytes], int]]:
     """Context manager to handle the FFmpeg process lifecycle.
 
+    This manager configures and invokes FFmpeg as a subprocess, yielding a
+    writeable stream for raw video frames. It ensures proper cleanup of the
+    subprocess upon exit.
+
     Args:
-        config: Video stream configuration.
+        config: Video stream configuration object.
 
     Yields:
         A tuple containing (stdin_stream, num_frames).
 
     Raises:
-        RuntimeError: If FFmpeg fails to start or closes unexpectedly.
+        RuntimeError: If FFmpeg fails to start, crashes during execution,
+                      or exits with a non-zero status code.
     """
-    # config.size is stored as height x width. FFmpeg expects width x height.
+    # config.size is stored as (height, width). FFmpeg expects 'width x height'.
     height, width = config.size
     num_images = max(int(config.duration * config.frame_rate), 1)
-    # Replicate the FFmpeg scale logic: round down to the nearest even number.
-    # FFmpeg: trunc(iw/2)*2 is equivalent to integer division by 2,
-    # multiplied by 2.
+
+    # Calculate output resolution. H.264 requires even dimensions.
+    # This logic replicates the FFmpeg filter: trunc(iw/2)*2.
     final_width = width // 2 * 2
     final_height = height // 2 * 2
 
     logger.debug("Input dimensions: %dx%d", width, height)
     logger.debug("Video resolution will be %dx%d", final_width, final_height)
 
-    # Use a list for the command; avoids shell injection issues
     cmd = [
         "ffmpeg",
         "-hide_banner",
         "-loglevel",
         config.ffmpeg_loglevel,
-        "-y",  # Overwrite output
+        "-y",  # Overwrite output files without asking.
+        # --- Input Configuration ---
         "-f",
-        "rawvideo",  # Read raw bytes
+        "rawvideo",  # Format: raw video data
         "-r",
-        str(config.frame_rate),
+        str(config.frame_rate),  # Frame rate
         "-s",
-        # Pass the original sizes, FFmpeg scales it internally
-        f"{width}x{height}",
+        f"{width}x{height}",  # Frame size
         "-pix_fmt",
-        "bgr24",  # Use BGR24 as the input format
+        "bgr24",  # Input pixel format (OpenCV default)
         "-i",
-        "-",  # stdin
+        "-",  # Read from stdin
+        # --- Output Configuration ---
         "-c:v",
-        "libx264",
-        "-crf",  # Constant Rate Factor
-        "25",
-        # Ensure dimensions are divisible by 2 for H.264
+        "libx264",  # Codec: H.264
+        "-crf",
+        "25",  # Quality: Constant Rate Factor
         "-vf",
-        "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+        "scale=trunc(iw/2)*2:trunc(ih/2)*2",  # Force even dimensions
         "-pix_fmt",
-        "yuv420p",  # Compatibility for players
+        "yuv420p",  # Output pixel format (broad compatibility)
         config.output,
     ]
 
-    process = Popen(
-        cmd,
-        stdin=PIPE,
-    )
+    process = Popen(cmd, stdin=PIPE)
 
     if process.stdin is None:
-        raise RuntimeError("Unable to open ffmpeg input stream.")
+        raise RuntimeError("Unable to open FFmpeg input stream.")
 
     try:
         yield process.stdin, num_images
     except BrokenPipeError:
         raise RuntimeError("FFmpeg process ended unexpectedly.") from None
     except Exception:
-        # Safety net for other exceptions
+        # Safety net: ensure subprocess is terminated on other exceptions.
         process.terminate()
         raise
     finally:
-        # Close stdin to signal EOF to ffmpeg
+        # Close stdin to signal EOF to FFmpeg.
         if not process.stdin.closed:
             process.stdin.close()
 
-        # Wait for ffmpeg to finish writing the file
+        # Wait for FFmpeg to finalize the file.
         return_code = process.wait()
 
-        # If there was an error not caught by BrokenPipeError
         if return_code != 0:
             cmd_str = " ".join(cmd)
             raise RuntimeError(
