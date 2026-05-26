@@ -173,7 +173,7 @@ def _morph_triangle(
     _blend_triangle_patch(img, rect_dest, mask, img_rect)
 
 
-def generate_morph_frame(  # noqa: PLR0913
+def _generate_morph_frame(  # noqa: PLR0913
     img1: ImageArray,
     img2: ImageArray,
     p1_arr: np.ndarray,
@@ -262,7 +262,7 @@ def generate_morph_sequence(
             alpha = frame_index / max(1, num_images - 1)
 
             # Generate the intermediate morph frame.
-            frame = generate_morph_frame(
+            frame = _generate_morph_frame(
                 img1_float,
                 img2_float,
                 p1_arr,

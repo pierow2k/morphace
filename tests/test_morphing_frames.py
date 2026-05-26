@@ -10,8 +10,8 @@ import pytest
 from morphace.morphing import frames
 from morphace.morphing.config import MorphVideoConfig
 from morphace.morphing.frames import (
+    _generate_morph_frame,
     _triangle_mask,
-    generate_morph_frame,
     generate_morph_sequence,
 )
 
@@ -24,7 +24,7 @@ def test_generate_morph_frame_blends_triangle_pixels() -> None:
     image2 = np.full((4, 4, 3), 30, dtype=np.float32)
     points = np.array([(0, 0), (3, 0), (0, 3)], dtype=np.float32)
 
-    frame = generate_morph_frame(
+    frame = _generate_morph_frame(
         image1,
         image2,
         points,
@@ -56,7 +56,7 @@ def test_generate_morph_frame_draws_triangle_overlay() -> None:
     image2 = np.full((4, 4, 3), 30, dtype=np.float32)
     points = np.array([(0, 0), (3, 0), (0, 3)], dtype=np.float32)
 
-    frame = generate_morph_frame(
+    frame = _generate_morph_frame(
         image1,
         image2,
         points,
@@ -123,7 +123,7 @@ def test_generate_morph_sequence_writes_interpolated_frames(
     )
     monkeypatch.setattr(
         frames,
-        "generate_morph_frame",
+        "_generate_morph_frame",
         fake_generate_morph_frame,
     )
 
