@@ -19,7 +19,7 @@ from morphace.landmarks import (
 logger = logging.getLogger(__name__)
 
 
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description=(
@@ -114,7 +114,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def configure_logging(debug: bool) -> None:
+def _configure_logging(debug: bool) -> None:
     """Configure logging."""
     logging.basicConfig(
         level=logging.DEBUG if debug else logging.INFO,
@@ -124,9 +124,9 @@ def configure_logging(debug: bool) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
-    args = parse_args(argv)
+    args = _parse_args(argv)
 
-    configure_logging(args.debug)
+    _configure_logging(args.debug)
 
     source = Path(args.source)
 
