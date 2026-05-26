@@ -61,10 +61,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "-f",
-        "--overwrite",
-        default=False,
-        help="Overwrite existing aligned images",
+        "--force",
         action="store_true",
+        default=False,
+        dest="overwrite",
+        help="Overwrite existing aligned images",
     )
     parser.add_argument(
         "-l",
