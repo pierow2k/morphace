@@ -24,7 +24,7 @@ def morph_faces(
     config: MorphConfig,
     show_triangles: bool = False,
 ) -> Path:
-    """Perform face morphing between two images.
+    """Orchestrates face morphing between two images.
 
     Args:
         img1: The first input image.
