@@ -1,11 +1,14 @@
 """Utilities for video stream handling and FFmpeg integration."""
 
+import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from typing import IO
 
 from .config import MorphVideoConfig
+
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -23,9 +26,11 @@ def video_writer_context(
     Raises:
         RuntimeError: If FFmpeg fails to start or closes unexpectedly.
     """
-    width, height = config.size
+    # config.size is stored as height x width. FFmpeg expects width x height.
+    height, width = config.size
     num_images = max(int(config.duration * config.frame_rate), 1)
     size_str = f"{width}x{height}"
+    logger.debug("FFmpeg size (w x h): %s", size_str)
 
     # Use a list for the command; avoids shell injection issues
     cmd = [
@@ -44,7 +49,7 @@ def video_writer_context(
         "-",  # stdin
         "-c:v",
         "libx264",
-        "-crf",
+        "-crf",  # Constant Rate Factor
         "25",
         # Ensure dimensions are divisible by 2 for H.264
         "-vf",
