@@ -39,6 +39,34 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "directories, same directory as source for files)",
     )
     parser.add_argument(
+        "-a",
+        "--alpha",
+        default=False,
+        help=(
+            "Use alpha channel for padded regions instead of reflected padding"
+        ),
+        action="store_true",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug-level logging",
+    )
+    parser.add_argument(
+        "-e",
+        "--em-scale",
+        default=0.1,
+        help="Shift crop center from eyes toward mouth",
+        type=float,
+    )
+    parser.add_argument(
+        "-f",
+        "--overwrite",
+        default=False,
+        help="Overwrite existing aligned images",
+        action="store_true",
+    )
+    parser.add_argument(
         "-l",
         "--landmark-model",
         type=Path,
@@ -55,20 +83,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=1024,
         help="Pixel dimension of the output square crop",
         type=int,
-    )
-    parser.add_argument(
-        "-f",
-        "--overwrite",
-        default=False,
-        help="Overwrite existing aligned images",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-e",
-        "--em-scale",
-        default=0.1,
-        help="Shift crop center from eyes toward mouth",
-        type=float,
     )
     parser.add_argument(
         "-x",
@@ -89,20 +103,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "context, <1.0 crops tighter"
         ),
         type=float,
-    )
-    parser.add_argument(
-        "-a",
-        "--alpha",
-        default=False,
-        help=(
-            "Use alpha channel for padded regions instead of reflected padding"
-        ),
-        action="store_true",
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug-level logging",
     )
     parser.add_argument(
         "-V",
