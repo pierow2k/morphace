@@ -29,9 +29,14 @@ def video_writer_context(
     # config.size is stored as height x width. FFmpeg expects width x height.
     height, width = config.size
     num_images = max(int(config.duration * config.frame_rate), 1)
-    size_str = f"{width}x{height}"
-    logger.debug("FFmpeg size (w x h): %s", size_str)
-    logger.debug("FFmpeg log level is %s", config.ffmpeg_loglevel)
+    # Replicate the FFmpeg scale logic: round down to the nearest even number.
+    # FFmpeg: trunc(iw/2)*2 is equivalent to integer division by 2,
+    # multiplied by 2.
+    final_width = width // 2 * 2
+    final_height = height // 2 * 2
+
+    logger.debug("Input dimensions: %dx%d", width, height)
+    logger.debug("Video resolution will be %dx%d", final_width, final_height)
 
     # Use a list for the command; avoids shell injection issues
     cmd = [
@@ -41,13 +46,14 @@ def video_writer_context(
         config.ffmpeg_loglevel,
         "-y",  # Overwrite output
         "-f",
-        "rawvideo",  # Read raw bytes instead of images.
+        "rawvideo",  # Read raw bytes
         "-r",
         str(config.frame_rate),
         "-s",
-        size_str,
+        # Pass the original sizes, FFmpeg scales it internally
+        f"{width}x{height}",
         "-pix_fmt",
-        "bgr24",  # Use BGR24 as the input format.
+        "bgr24",  # Use BGR24 as the input format
         "-i",
         "-",  # stdin
         "-c:v",
@@ -62,7 +68,6 @@ def video_writer_context(
         config.output,
     ]
 
-    # stderr=PIPE allows capturing error messages if the process fails
     process = Popen(
         cmd,
         stdin=PIPE,
