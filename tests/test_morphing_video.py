@@ -59,7 +59,6 @@ def test_video_writer_context_builds_ffmpeg_command(
         assert num_images == 6  # noqa:PLR2004
 
     assert captured["stdin"] == video.PIPE
-    assert captured["stderr"] == video.PIPE
     assert captured["command"] == [
         "ffmpeg",
         "-hide_banner",
@@ -67,11 +66,13 @@ def test_video_writer_context_builds_ffmpeg_command(
         "info",
         "-y",
         "-f",
-        "image2pipe",
+        "rawvideo",
         "-r",
         "3",
         "-s",
         "10x8",
+        "-pix_fmt",
+        "bgr24",
         "-i",
         "-",
         "-c:v",

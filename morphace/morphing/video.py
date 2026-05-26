@@ -31,6 +31,7 @@ def video_writer_context(
     num_images = max(int(config.duration * config.frame_rate), 1)
     size_str = f"{width}x{height}"
     logger.debug("FFmpeg size (w x h): %s", size_str)
+    logger.debug("FFmpeg log level is %s", config.ffmpeg_loglevel)
 
     # Use a list for the command; avoids shell injection issues
     cmd = [
@@ -40,11 +41,13 @@ def video_writer_context(
         config.ffmpeg_loglevel,
         "-y",  # Overwrite output
         "-f",
-        "image2pipe",  # Reading images from pipe
+        "rawvideo",  # Read raw bytes instead of images.
         "-r",
         str(config.frame_rate),
         "-s",
         size_str,
+        "-pix_fmt",
+        "bgr24",  # Use BGR24 as the input format.
         "-i",
         "-",  # stdin
         "-c:v",
@@ -63,7 +66,6 @@ def video_writer_context(
     process = Popen(
         cmd,
         stdin=PIPE,
-        stderr=PIPE,  # Capture stderr to diagnose failures
     )
 
     if process.stdin is None:
@@ -72,12 +74,7 @@ def video_writer_context(
     try:
         yield process.stdin, num_images
     except BrokenPipeError:
-        # If the pipe breaks, ffmpeg likely crashed; check stderr
-        stderr_output = process.stderr.read().decode() if process.stderr else ""
-        raise RuntimeError(
-            f"FFmpeg process ended unexpectedly.\n"
-            f"FFmpeg Error:\n{stderr_output}"
-        ) from None
+        raise RuntimeError("FFmpeg process ended unexpectedly.") from None
     except Exception:
         # Safety net for other exceptions
         process.terminate()
@@ -92,12 +89,8 @@ def video_writer_context(
 
         # If there was an error not caught by BrokenPipeError
         if return_code != 0:
-            stderr_output = ""
-            if process.stderr:
-                stderr_output = process.stderr.read().decode()
             cmd_str = " ".join(cmd)
             raise RuntimeError(
                 f"FFmpeg failed with return code {return_code}.\n"
-                f"Command: {cmd_str}\n"
-                f"Error:\n{stderr_output}"
+                f"Command: {cmd_str}"
             )

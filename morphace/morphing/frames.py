@@ -4,7 +4,6 @@ from collections.abc import Sequence
 
 import cv2
 import numpy as np
-from PIL import Image
 
 from morphace._typing import (
     FloatPoint,
@@ -252,11 +251,8 @@ def generate_morph_sequence(
                 show_triangles,
             )
 
-            # Conversion and writing
-            res = Image.fromarray(
-                cv2.cvtColor(
-                    np.asarray(frame, dtype=np.uint8),
-                    cv2.COLOR_BGR2RGB,
-                )
-            )
-            res.save(stdin, "JPEG")
+            # Ensure array is uint8
+            frame_uint8 = np.asarray(frame, dtype=np.uint8)
+
+            # Write raw bytes directly to stdin
+            stdin.write(frame_uint8.tobytes())
