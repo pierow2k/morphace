@@ -60,6 +60,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Path for the output MP4 video (default: %(default)s)",
     )
     parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug-level logging",
+    )
+    parser.add_argument(
         "-d",
         "--duration",
         type=int,
@@ -114,11 +119,19 @@ def _read_input_images(args: argparse.Namespace) -> tuple[Any, Any] | None:
     return image1, image2
 
 
+def configure_logging(debug: bool) -> None:
+    """Configure logging."""
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO,
+        format="%(levelname)s: %(message)s",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI for morphace."""
     args = parse_args(argv)
 
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    configure_logging(args.debug)
 
     # Input validation
     if args.duration <= 0 or args.fps <= 0:
