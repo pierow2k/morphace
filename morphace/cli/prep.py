@@ -100,6 +100,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
     )
     parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug-level logging",
+    )
+    parser.add_argument(
         "-V",
         "--version",
         action="version",
@@ -108,17 +113,26 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def configure_logging(debug: bool) -> None:
+    """Configure logging."""
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO,
+        format="%(levelname)s: %(message)s",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     args = parse_args(argv)
+
+    configure_logging(args.debug)
+
     source = Path(args.source)
 
     if not hasattr(args, "aligned_dir"):
         args.aligned_dir = (
             source / "cropped" if source.is_dir() else source.parent
         )
-
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     try:
         landmark_model_path = resolve_landmark_model_path(args.landmark_model)
