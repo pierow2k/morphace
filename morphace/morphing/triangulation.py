@@ -76,7 +76,17 @@ def compute_delaunay_triangles(
     height: int,
     landmarks: LandmarkArray,
 ) -> TriangleList:
-    """Creates a Delaunay triangulation from a provided list of points."""
+    """Creates a Delaunay triangulation from a provided list of points.
+
+    Args:
+        width: Width of the image frame or boundary area.
+        height: Height of the image frame or boundary area.
+        landmarks: An array of (x, y) coordinates to triangulate.
+
+    Returns:
+        A list of triangle vertex indices. Each entry is a tuple of three
+        indices corresponding to the input landmarks.
+    """
     points_array = np.asarray(landmarks)
 
     # Sanitize points: convert to int tuples
