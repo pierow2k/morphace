@@ -16,7 +16,7 @@ import shutil
 import sys
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import cv2
 
@@ -28,6 +28,22 @@ from morphace.landmarks import (
 from morphace.morphing import MorphConfig, morph_faces
 
 logger = logging.getLogger(__name__)
+
+
+class ValidatedInputs(NamedTuple):
+    """Container for validated inputs required for the morphing workflow.
+
+    Attributes:
+        image1: The first input image array.
+        image2: The second input image array.
+        landmark_model_path: Path to the resolved landmark model file.
+        ffmpeg_loglevel: The log level string for ffmpeg execution.
+    """
+
+    image1: Any
+    image2: Any
+    landmark_model_path: Path
+    ffmpeg_loglevel: str
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -129,33 +145,30 @@ def _configure_logging(debug: bool) -> None:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI for morphace."""
-    args = _parse_args(argv)
+def _validate_inputs(args: argparse.Namespace) -> ValidatedInputs | int:
+    """Validate command line arguments and system requirements.
 
-    _configure_logging(args.debug)
+    Checks that duration and FPS are positive, ffmpeg is available, input
+    images are readable, and the landmark model exists.
 
-    # Input validation
+    Args:
+        args: Parsed command line arguments.
+
+    Returns:
+        A ValidatedInputs object containing the processed inputs if
+        validation succeeds, or an integer error code (1) if validation fails.
+    """
     if args.duration <= 0 or args.fps <= 0:
         logger.error("Duration and frame rate must be positive integers.")
         return 1
 
-    ffmpeg_path = shutil.which("ffmpeg")
-
-    if ffmpeg_path is None:
+    if shutil.which("ffmpeg") is None:
         logger.error("ffmpeg is not installed or not in PATH")
         return 1
-
-    logger.debug("Found ffmpeg at: %s", ffmpeg_path)
-
-    ffmpeg_loglevel = (
-        "info" if getattr(args, "show_ffmpeg_output", False) else "error"
-    )
 
     images = _read_input_images(args)
     if images is None:
         return 1
-    image1, image2 = images
 
     try:
         landmark_model_path = resolve_landmark_model_path(args.landmark_model)
@@ -166,16 +179,37 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("%s", error)  # noqa: TRY400
         return 1
 
-    config = MorphConfig(
-        duration=args.duration,
-        frame_rate=args.fps,
-        output=args.output,
+    ffmpeg_loglevel = (
+        "info" if getattr(args, "show_ffmpeg_output", False) else "error"
+    )
+
+    return ValidatedInputs(
+        image1=images[0],
+        image2=images[1],
         landmark_model_path=landmark_model_path,
         ffmpeg_loglevel=ffmpeg_loglevel,
     )
 
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI for morphace."""
+    args = _parse_args(argv)
+    _configure_logging(args.debug)
+
+    validated = _validate_inputs(args)
+    if isinstance(validated, int):
+        return validated
+
+    config = MorphConfig(
+        duration=args.duration,
+        frame_rate=args.fps,
+        output=args.output,
+        landmark_model_path=validated.landmark_model_path,
+        ffmpeg_loglevel=validated.ffmpeg_loglevel,
+    )
+
     try:
-        morph_faces(image1, image2, config, args.show_mesh)
+        morph_faces(validated.image1, validated.image2, config, args.show_mesh)
         logger.info("Morphing complete. Video saved to %s", args.output)
     except NoFaceFoundError:
         logger.error(  # noqa: TRY400
