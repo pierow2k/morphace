@@ -12,6 +12,7 @@ Example:
 
 import argparse
 import logging
+import shutil
 import sys
 from importlib.metadata import version
 from pathlib import Path
@@ -138,6 +139,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.duration <= 0 or args.fps <= 0:
         logger.error("Duration and frame rate must be positive integers.")
         return 1
+
+    ffmpeg_path = shutil.which("ffmpeg")
+
+    if ffmpeg_path is None:
+        logger.error("ffmpeg is not installed or not in PATH")
+        return 1
+
+    logger.debug("Found ffmpeg at: %s", ffmpeg_path)
 
     ffmpeg_loglevel = (
         "info" if getattr(args, "show_ffmpeg_output", False) else "error"
