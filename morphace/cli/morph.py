@@ -63,13 +63,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "-l",
         "--landmark-model",
-        type=Path,
         default=None,
         help=(
-            "Path to shape_predictor_68_face_landmarks.dat. "
+            "Path to `{MODEL_FILENAME}` model file. "
             "If omitted, morphace checks MORPHACE_LANDMARK_MODEL "
             "and then the default user data directory."
         ),
+        type=Path,
     )
     parser.add_argument(
         "-o",

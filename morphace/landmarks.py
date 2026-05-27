@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from ._typing import ImageArray, LandmarkList, PathInput
 
-MODEL_FILENAME = "shape_predictor_68_face_landmarks.dat"
+MODEL_FILENAME = "shape_predictor_68_face_landmarks_GTX.dat"
 MODEL_ENV_VAR = "MORPHACE_LANDMARK_MODEL"
 
 logger = logging.getLogger(__name__)
