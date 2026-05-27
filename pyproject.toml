@@ -13,12 +13,14 @@ dependencies = [
   "numpy==2.4.5",
   "opencv-python==4.13.0.92",
   "pillow==12.2.0",
+  "requests==2.34.2",
   "scipy==1.17.1",
   "platformdirs==4.9.6"
 ]
 
 [project.scripts]
 morphace = "morphace.cli.morph:main"
+morphace-download = "morphace.cli.download:main"
 morphace-prep = "morphace.cli.prep:main"
 
 
