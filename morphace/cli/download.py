@@ -20,23 +20,8 @@ from morphace.landmarks import MODEL_FILENAME, default_landmark_model_path
 logger = logging.getLogger(__name__)
 
 
-def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse command line arguments.
-
-    Args:
-        argv: Optional list of command line arguments. If None, defaults
-            to sys.argv[1:].
-
-    Returns:
-        Namespace containing parsed arguments with attributes:
-            debug (bool): Whether debug logging is enabled.
-            overwrite (bool): Whether to overwrite existing files.
-            save_to (Path | None): Custom save directory, or None for default.
-    """
-    parser = argparse.ArgumentParser(
-        description=(f"Download DLIB {MODEL_FILENAME} landmark model file."),
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
+def add_arguments(parser: argparse.ArgumentParser) -> None:
+    """Add download command arguments to an argument parser."""
     parser.add_argument(
         "--debug",
         action="store_true",
@@ -56,11 +41,30 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=None,
         help=(
-            "Path to save the model file."
+            "Path to save the model file. "
             "If omitted, the default user data directory will be used."
         ),
     )
 
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments.
+
+    Args:
+        argv: Optional list of command line arguments. If None, defaults
+            to sys.argv[1:].
+
+    Returns:
+        Namespace containing parsed arguments with attributes:
+            debug (bool): Whether debug logging is enabled.
+            overwrite (bool): Whether to overwrite existing files.
+            save_to (Path | None): Custom save directory, or None for default.
+    """
+    parser = argparse.ArgumentParser(
+        description=(f"Download DLIB {MODEL_FILENAME} landmark model file."),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    add_arguments(parser)
     return parser.parse_args(argv)
 
 
@@ -179,21 +183,16 @@ def download_dlib_model(model_path: Path, overwrite: bool) -> None:
         raise
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI entrypoint for the DLIB model download utility.
-
-    Parses arguments, configures logging, determines the target path,
-    and initiates the download process.
+def run(args: argparse.Namespace) -> int:
+    """Run the DLIB model download command.
 
     Args:
-        argv: Optional list of command line arguments. If None, defaults
-            to sys.argv[1:] for standard CLI behavior.
+        args: Parsed command line arguments.
 
     Returns:
         Exit code: 0 on successful download or if file already exists,
             1 if an error occurred during download or decompression.
     """
-    args = _parse_args(argv)
     _configure_logging(args.debug)
 
     if args.save_to is None:
@@ -209,6 +208,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for the DLIB model download utility."""
+    return run(_parse_args(argv))
 
 
 if __name__ == "__main__":

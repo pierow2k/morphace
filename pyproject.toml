@@ -19,9 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-morphace = "morphace.cli.morph:main"
-morphace-download = "morphace.cli.download:main"
-morphace-prep = "morphace.cli.prep:main"
+morphace = "morphace.cli.main:main"
 
 
 [dependency-groups]
