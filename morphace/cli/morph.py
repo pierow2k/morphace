@@ -4,10 +4,10 @@ Parses command-line arguments, validates inputs, and delegates
 to the morphace workflow to generate a face morphing video.
 
 Usage:
-    morphace <image1> <image2> [options]
+    morphace morph <image1> <image2> [options]
 
 Example:
-    morphace source1.jpg source2.jpg --output morph.mp4 --duration 5
+    morphace morph source1.jpg source2.jpg --output morph.mp4 --duration 5
 """
 
 import argparse
@@ -21,6 +21,7 @@ from typing import Any, NamedTuple
 import cv2
 
 from morphace.landmarks import (
+    MODEL_FILENAME,
     LandmarkModelNotFoundError,
     NoFaceFoundError,
     resolve_landmark_model_path,
@@ -46,12 +47,8 @@ class ValidatedInputs(NamedTuple):
     ffmpeg_loglevel: str
 
 
-def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Generate a face morphing video.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
+def add_arguments(parser: argparse.ArgumentParser) -> None:
+    """Add morph command arguments to an argument parser."""
     parser.add_argument(
         "img1",
         help="Path to the first face image",
@@ -65,7 +62,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--landmark-model",
         default=None,
         help=(
-            "Path to `{MODEL_FILENAME}` model file. "
+            f"Path to {MODEL_FILENAME} model file. "
             "If omitted, morphace checks MORPHACE_LANDMARK_MODEL "
             "and then the default user data directory."
         ),
@@ -119,6 +116,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="version",
         version="%(prog)s " + version("morphace"),
     )
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Generate a face morphing video.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    add_arguments(parser)
     return parser.parse_args(argv)
 
 
@@ -191,9 +197,8 @@ def _validate_inputs(args: argparse.Namespace) -> ValidatedInputs | int:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI for morphace."""
-    args = _parse_args(argv)
+def run(args: argparse.Namespace) -> int:
+    """Run the morph command with parsed arguments."""
     _configure_logging(args.debug)
 
     validated = _validate_inputs(args)
@@ -222,6 +227,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI for the morph subcommand."""
+    return run(_parse_args(argv))
 
 
 if __name__ == "__main__":

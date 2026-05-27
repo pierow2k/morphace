@@ -12,6 +12,7 @@ from morphace.alignment import (
     align_faces,
 )
 from morphace.landmarks import (
+    MODEL_FILENAME,
     LandmarkModelNotFoundError,
     resolve_landmark_model_path,
 )
@@ -19,15 +20,8 @@ from morphace.landmarks import (
 logger = logging.getLogger(__name__)
 
 
-def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
-        description=(
-            "Detect faces in raw images and prepare aligned square PNG crops "
-            "for morphing."
-        ),
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
+def add_arguments(parser: argparse.ArgumentParser) -> None:
+    """Add prep command arguments to an argument parser."""
     parser.add_argument(
         "source", help="Path to a directory of images or a single image file"
     )
@@ -72,7 +66,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--landmark-model",
         default=None,
         help=(
-            "Path to `{MODEL_FILENAME}` model file. "
+            f"Path to {MODEL_FILENAME} model file. "
             "If omitted, morphace checks MORPHACE_LANDMARK_MODEL "
             "and then the default user data directory."
         ),
@@ -111,6 +105,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="version",
         version="%(prog)s " + version("morphace"),
     )
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description=(
+            "Detect faces in raw images and prepare aligned square PNG crops "
+            "for morphing."
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    add_arguments(parser)
     return parser.parse_args(argv)
 
 
@@ -122,10 +128,8 @@ def _configure_logging(debug: bool) -> None:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI entrypoint."""
-    args = _parse_args(argv)
-
+def run(args: argparse.Namespace) -> int:
+    """Run the prep command with parsed arguments."""
     _configure_logging(args.debug)
 
     source = Path(args.source)
@@ -156,6 +160,11 @@ def main(argv: list[str] | None = None) -> int:
 
     align_faces(config, overwrite=args.overwrite)
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for the prep subcommand."""
+    return run(_parse_args(argv))
 
 
 if __name__ == "__main__":
