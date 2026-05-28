@@ -38,12 +38,14 @@ class ValidatedInputs(NamedTuple):
         image1: The first input image array.
         image2: The second input image array.
         landmark_model_path: Path to the resolved landmark model file.
+        output_filename: The validated output filename for the morph video.
         ffmpeg_loglevel: The log level string for ffmpeg execution.
     """
 
     image1: Any
     image2: Any
     landmark_model_path: Path
+    output_filename: str
     ffmpeg_loglevel: str
 
 
@@ -189,11 +191,19 @@ def _validate_inputs(args: argparse.Namespace) -> ValidatedInputs | int:
         "info" if getattr(args, "show_ffmpeg_output", False) else "error"
     )
 
+    # Output filename must end with .mp4 for ffmpeg to recognize the format.
+    if not args.output.lower().endswith(".mp4"):
+        output_filename = args.output + ".mp4"
+    else:
+        output_filename = args.output
+
+
     return ValidatedInputs(
         image1=images[0],
         image2=images[1],
         landmark_model_path=landmark_model_path,
         ffmpeg_loglevel=ffmpeg_loglevel,
+        output_filename=output_filename,
     )
 
 
@@ -208,14 +218,14 @@ def run(args: argparse.Namespace) -> int:
     config = MorphConfig(
         duration=args.duration,
         frame_rate=args.fps,
-        output=args.output,
+        output=validated.output_filename,
         landmark_model_path=validated.landmark_model_path,
         ffmpeg_loglevel=validated.ffmpeg_loglevel,
     )
 
     try:
         morph_faces(validated.image1, validated.image2, config, args.show_mesh)
-        logger.info("Morphing complete. Video saved to %s", args.output)
+        logger.info("Morphing complete. Video saved to %s", validated.output_filename)
     except NoFaceFoundError:
         logger.error(  # noqa: TRY400
             "Error: Could not detect a face in one or both images."
