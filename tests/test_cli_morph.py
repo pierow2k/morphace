@@ -16,6 +16,11 @@ def _image() -> np.ndarray:
     return np.zeros((4, 4, 3), dtype=np.uint8)
 
 
+def _output_args(tmp_path: Path, name: str = "morph.mp4") -> list[str]:
+    """Return CLI arguments for an isolated output path."""
+    return ["--output", str(tmp_path / name)]
+
+
 def test_main_builds_morph_config(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -63,7 +68,7 @@ def test_main_builds_morph_config(
             "--landmark-model",
             "shape_predictor.dat",
             "--output",
-            "out.mp4",
+            str(tmp_path / "out.mp4"),
             "--duration",
             "7",
             "--fps",
@@ -77,7 +82,7 @@ def test_main_builds_morph_config(
     assert captured["workflow"][2] == MorphConfig(
         duration=7,
         frame_rate=24,
-        output="out.mp4",
+        output=str(tmp_path / "out.mp4"),
         landmark_model_path=Path("resolved_shape_predictor.dat"),
     )
     assert captured["workflow"][3] is True
@@ -124,7 +129,14 @@ def test_main_sets_verbose_ffmpeg_loglevel(
     )
     monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
 
-    result = morph.main([str(img1), str(img2), "--show-ffmpeg-output"])
+    result = morph.main(
+        [
+            str(img1),
+            str(img2),
+            *_output_args(tmp_path),
+            "--show-ffmpeg-output",
+        ]
+    )
 
     assert result == 0
     assert captured["config"].ffmpeg_loglevel == "info"
@@ -141,7 +153,7 @@ def test_main_rejects_non_positive_timing(
     img1.write_bytes(b"")
     img2.write_bytes(b"")
 
-    result = morph.main([str(img1), str(img2), *args])
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path), *args])
 
     assert result == 1
 
@@ -165,7 +177,7 @@ def test_main_returns_error_for_unreadable_image(
     monkeypatch.setattr(morph.shutil, "which", lambda _: "ffmpeg")
     monkeypatch.setattr(morph.cv2, "imread", fake_imread)
 
-    result = morph.main([str(img1), str(img2)])
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
 
     assert result == 1
 
@@ -182,7 +194,21 @@ def test_main_returns_error_when_ffmpeg_is_missing(
 
     monkeypatch.setattr(morph.shutil, "which", lambda _: None)
 
-    result = morph.main([str(img1), str(img2)])
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
+
+    assert result == 1
+
+
+def test_main_returns_error_when_output_exists(tmp_path: Path) -> None:
+    """Verify morph CLI refuses to overwrite output without --force."""
+    img1 = tmp_path / "first.png"
+    img2 = tmp_path / "second.png"
+    output = tmp_path / "morph.mp4"
+    img1.write_bytes(b"")
+    img2.write_bytes(b"")
+    output.write_bytes(b"existing video")
+
+    result = morph.main([str(img1), str(img2), "--output", str(output)])
 
     assert result == 1
 
@@ -197,7 +223,7 @@ def test_main_returns_error_when_source_images_do_not_exist(
 
     monkeypatch.setattr(morph.shutil, "which", lambda _: "ffmpeg")
 
-    result = morph.main([str(img1), str(img2)])
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
 
     assert result == 1
 
@@ -213,7 +239,7 @@ def test_main_returns_error_when_second_source_image_does_not_exist(
 
     monkeypatch.setattr(morph.shutil, "which", lambda _: "ffmpeg")
 
-    result = morph.main([str(img1), str(img2)])
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
 
     assert result == 1
 
@@ -237,7 +263,7 @@ def test_main_returns_error_for_unreadable_first_image(
     monkeypatch.setattr(morph.shutil, "which", lambda _: "ffmpeg")
     monkeypatch.setattr(morph.cv2, "imread", fake_imread)
 
-    result = morph.main([str(img1), str(img2)])
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
 
     assert result == 1
 
@@ -279,7 +305,7 @@ def test_main_returns_error_when_model_is_missing(
     )
     monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
 
-    result = morph.main([str(img1), str(img2)])
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
 
     assert result == 1
     assert not called_morph_faces
@@ -318,7 +344,9 @@ def test_main_returns_error_when_no_face_is_found(
     )
     monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
 
-    result = morph.main([str(img1), str(img2)])
+    monkeypatch.setattr(morph.shutil, "which", lambda _: "ffmpeg")
+
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
 
     assert result == 1
 
@@ -356,7 +384,9 @@ def test_main_returns_error_for_runtime_failure(
     )
     monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
 
-    result = morph.main([str(img1), str(img2)])
+    monkeypatch.setattr(morph.shutil, "which", lambda _: "ffmpeg")
+
+    result = morph.main([str(img1), str(img2), *_output_args(tmp_path)])
 
     assert result == 1
 
@@ -389,8 +419,11 @@ def test_main_appends_mp4_extension(
     )
     monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
 
-    morph.main([str(img1), str(img2), "--output", "video"])
-    assert captured_output == "video.mp4"
+    output_stem = tmp_path / "video"
+    mp4_output = tmp_path / "movie.mp4"
 
-    morph.main([str(img1), str(img2), "--output", "movie.mp4"])
-    assert captured_output == "movie.mp4"
+    morph.main([str(img1), str(img2), "--output", str(output_stem)])
+    assert captured_output == f"{output_stem}.mp4"
+
+    morph.main([str(img1), str(img2), "--output", str(mp4_output)])
+    assert captured_output == str(mp4_output)
