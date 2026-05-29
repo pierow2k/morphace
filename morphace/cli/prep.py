@@ -134,6 +134,10 @@ def run(args: argparse.Namespace) -> int:
 
     source = Path(args.source)
 
+    if not source.exists():
+        logger.error("Source path does not exist: %s", source)
+        return 1
+
     if not hasattr(args, "aligned_dir"):
         args.aligned_dir = (
             source / "cropped" if source.is_dir() else source.parent
