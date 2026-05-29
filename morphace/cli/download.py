@@ -82,14 +82,19 @@ def _configure_logging(debug: bool) -> None:
 
 
 def show_license_info() -> None:
-    """Log license information for the dlib model."""
-    logger.info(
-        "The dlib model is trained on the ibug 300-W dataset. The "
-        "license for this dataset excludes commercial use the trained "
-        "model therefore cannot be used in a commercial product. Contact "
-        "Imperial College London to for more details before using the "
-        "model in a commercial product.\n"
-        "https://ibug.doc.ic.ac.uk/resources/facial-point-annotations/"
+    """Log license information for the dlib facial landmark model."""
+    logger.warning(
+        "   License  notice:   shape_predictor_68_face_landmarks_GTX.dat.bz2 "
+        "was\ntrained  on the  iBUG  300-W  dataset. The  iBUG  annotations  "
+        "are provided  for\nresearch purposes only  and exclude commercial "
+        "products.  The dlib-model' README\nstates that the trained model "
+        "should not  be used in a commercial product unless\nyou have  "
+        "confirmed that your  use is permitted.  For commercial use,  consult "
+        "a\nlawyer or contact Imperial College London before proceeding.\n"
+        "\n"
+        "https://ibug.doc.ic.ac.uk/resources/facial-point-annotations/\n"
+        "https://github.com/davisking/dlib-models/"
+        "#shape_predictor_68_face_landmarks_gtxdatbz2\n"
     )
 
 
