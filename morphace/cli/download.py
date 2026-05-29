@@ -1,6 +1,6 @@
-"""Download and decompress the DLIB facial landmark model file.
+"""Download and decompress the dlib facial landmark model file.
 
-This module provides a command-line interface for downloading the DLIB
+This module provides a command-line interface for downloading the dlib
 shape predictor model from the official dlib-models GitHub repository.
 The downloaded .bz2 archive is automatically decompressed and saved to
 the user's data directory or a specified path.
@@ -61,7 +61,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             save_to (Path | None): Custom save directory, or None for default.
     """
     parser = argparse.ArgumentParser(
-        description=(f"Download DLIB {MODEL_FILENAME} landmark model file."),
+        description=(f"Download dlib {MODEL_FILENAME} landmark model file."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     add_arguments(parser)
@@ -82,9 +82,9 @@ def _configure_logging(debug: bool) -> None:
 
 
 def show_license_info() -> None:
-    """Log license information for the DLIB model."""
+    """Log license information for the dlib model."""
     logger.info(
-        "The DLIB model is trained on the ibug 300-W dataset. The "
+        "The dlib model is trained on the ibug 300-W dataset. The "
         "license for this dataset excludes commercial use the trained "
         "model therefore cannot be used in a commercial product. Contact "
         "Imperial College London to for more details before using the "
@@ -94,7 +94,7 @@ def show_license_info() -> None:
 
 
 def download_dlib_model(model_path: Path, overwrite: bool) -> None:
-    """Download and decompress the DLIB model file to the specified path.
+    """Download and decompress the dlib model file to the specified path.
 
     Downloads the compressed model from GitHub, streams it to a temporary
     file to minimize memory usage, then decompresses it to the final
@@ -132,7 +132,7 @@ def download_dlib_model(model_path: Path, overwrite: bool) -> None:
     # Ensure parent directory exists before attempting download
     model_path.parent.mkdir(parents=True, exist_ok=True)
 
-    logger.info("Downloading DLIB model from: %s", url)
+    logger.info("Downloading dlib model from: %s", url)
 
     try:
         # Write to temporary file for atomic replacement on success
@@ -184,7 +184,7 @@ def download_dlib_model(model_path: Path, overwrite: bool) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
-    """Run the DLIB model download command.
+    """Run the dlib model download command.
 
     Args:
         args: Parsed command line arguments.
@@ -211,7 +211,7 @@ def run(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entrypoint for the DLIB model download utility."""
+    """CLI entrypoint for the dlib model download utility."""
     return run(_parse_args(argv))
 
 
