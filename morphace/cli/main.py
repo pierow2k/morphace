@@ -53,8 +53,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
     download_parser = subparsers.add_parser(
         "download",
-        help="Download the DLIB landmark model.",
-        description="Download the DLIB landmark model file.",
+        help="Download the dlib landmark model.",
+        description="Download the dlib landmark model file.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     download.add_arguments(download_parser)
