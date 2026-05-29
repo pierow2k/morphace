@@ -1,9 +1,11 @@
 """Module for performing image warping and morphing between two faces."""
 
+import logging
 from collections.abc import Sequence
 
 import cv2
 import numpy as np
+from tqdm import tqdm
 
 from morphace._typing import (
     FloatPoint,
@@ -17,6 +19,8 @@ from morphace._typing import (
 from .config import MorphVideoConfig
 from .video import video_writer_context
 
+logger = logging.getLogger(__name__)
+
 TrianglePoints = tuple[
     np.ndarray | list[FloatPoint],
     np.ndarray | list[FloatPoint],
@@ -25,6 +29,20 @@ TrianglePoints = tuple[
 type CvRect = tuple[int, int, int, int]
 
 _GRAYSCALE_DIMS = 2
+_PROGRESS_LOG_INTERVAL_SECONDS = 5.0
+
+
+class _TqdmLogStream:
+    """File-like stream that forwards tqdm output through module logging."""
+
+    def write(self, message: str) -> None:
+        """Log non-empty tqdm progress messages."""
+        progress_message = message.strip()
+        if progress_message:
+            logger.info(progress_message)
+
+    def flush(self) -> None:
+        """Satisfy tqdm's file-like stream interface."""
 
 
 def _apply_affine_transform(
@@ -255,7 +273,20 @@ def generate_morph_sequence(
     p2_arr = np.array(points2, dtype=np.float32)
 
     with video_writer_context(video_config) as (stdin, num_images):
-        for frame_index in range(num_images):
+        frame_range = range(num_images)
+        progress_frames = tqdm(
+            frame_range,
+            bar_format=(
+                "{desc}: {n_fmt}/{total_fmt} frames ({percentage:3.0f}%)"
+            ),
+            desc="Generating morph video",
+            disable=not logger.isEnabledFor(logging.INFO),
+            file=_TqdmLogStream(),
+            mininterval=_PROGRESS_LOG_INTERVAL_SECONDS,
+            total=num_images,
+        )
+
+        for frame_index in progress_frames:
             # Calculate the interpolation factor (0.0 to 1.0).
             # alpha=0.0 yields the source image; alpha=1.0 yields
             # the destination.
