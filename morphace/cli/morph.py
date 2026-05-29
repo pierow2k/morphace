@@ -132,6 +132,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def _read_input_images(args: argparse.Namespace) -> tuple[Any, Any] | None:
     """Read both input images, returning None if either cannot be read."""
+    if not Path(args.img1).exists():
+        logger.error("Input image %s does not exist", args.img1)
+        return None
+    if not Path(args.img2).exists():
+        logger.error("Input image %s does not exist", args.img2)
+        return None
+
     image1 = cv2.imread(args.img1)
     image2 = cv2.imread(args.img2)
 

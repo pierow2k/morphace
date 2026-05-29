@@ -11,8 +11,11 @@ from morphace.landmarks import LandmarkModelNotFoundError
 
 def test_main_builds_alignment_config(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """Verify prep CLI passes parsed arguments to align_faces."""
+    source_dir = tmp_path / "raw"
+    source_dir.mkdir()
     captured_configs: list[AlignmentConfig] = []
 
     def fake_align_faces(
@@ -39,7 +42,7 @@ def test_main_builds_alignment_config(
 
     result = prep.main(
         [
-            "raw",
+            str(source_dir),
             "aligned",
             "--landmark-model",
             "shape_predictor.dat",
@@ -58,7 +61,7 @@ def test_main_builds_alignment_config(
     assert result == 0
     assert captured_configs == [
         AlignmentConfig(
-            source=Path("raw"),
+            source=source_dir,
             aligned_dir=Path("aligned"),
             landmark_model_path=Path("resolved_shape_predictor.dat"),
             face_alignment=FaceAlignmentOptions(
@@ -188,8 +191,11 @@ def test_main_uses_explicit_aligned_dir_for_file_source(
 
 def test_main_returns_error_when_model_is_missing(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """Verify prep CLI returns error before alignment if model is absent."""
+    source_dir = tmp_path / "raw"
+    source_dir.mkdir()
     called_align_faces = False
 
     def fake_align_faces(config: AlignmentConfig) -> None:
@@ -212,7 +218,16 @@ def test_main_returns_error_when_model_is_missing(
         fake_resolve_landmark_model_path,
     )
 
-    result = prep.main(["raw", "aligned"])
+    result = prep.main([str(source_dir), "aligned"])
 
     assert result == 1
     assert not called_align_faces
+
+
+def test_main_returns_error_when_source_does_not_exist(tmp_path: Path) -> None:
+    """Verify prep CLI returns error if the source path does not exist."""
+    nonexistent_path = tmp_path / "nonexistent"
+
+    result = prep.main([str(nonexistent_path)])
+
+    assert result == 1
