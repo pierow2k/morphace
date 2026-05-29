@@ -60,6 +60,14 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         help="Path to the second face image",
     )
     parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        default=False,
+        dest="overwrite",
+        help="Overwrite existing MP4 video",
+    )
+    parser.add_argument(
         "-l",
         "--landmark-model",
         default=None,
@@ -163,7 +171,8 @@ def _configure_logging(debug: bool) -> None:
 def _validate_inputs(args: argparse.Namespace) -> ValidatedInputs | int:
     """Validate command line arguments and system requirements.
 
-    Checks that duration and FPS are positive, ffmpeg is available, input
+    Checks that the output file does not already exist, that the
+    duration and FPS are positive, ffmpeg is available, input
     images are readable, and the landmark model exists.
 
     Args:
@@ -173,6 +182,10 @@ def _validate_inputs(args: argparse.Namespace) -> ValidatedInputs | int:
         A ValidatedInputs object containing the processed inputs if
         validation succeeds, or an integer error code (1) if validation fails.
     """
+    if not args.overwrite and Path(args.output).exists():
+        logger.error("Output file already exists. Use --force to overwrite.")
+        return 1
+
     if args.duration <= 0 or args.fps <= 0:
         logger.error("Duration and frame rate must be positive integers.")
         return 1
