@@ -22,20 +22,8 @@ logger = logging.getLogger(__name__)
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
     """Add download command arguments to an argument parser."""
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug-level logging.",
-    )
-    parser.add_argument(
-        "-f",
-        "--force",
-        action="store_true",
-        default=False,
-        dest="overwrite",
-        help="Overwrite existing model file.",
-    )
-    parser.add_argument(
+    download_options = parser.add_argument_group("download options")
+    download_options.add_argument(
         "-s",
         "--save-to",
         type=Path,
@@ -44,6 +32,29 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
             "Path to save the model file. "
             "If omitted, the default user data directory will be used."
         ),
+    )
+    download_options.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        default=False,
+        dest="overwrite",
+        help="Overwrite existing model file.",
+    )
+
+    diagnostic_options = parser.add_argument_group("diagnostic options")
+    diagnostic_options.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug-level logging.",
+    )
+
+    general_options = parser.add_argument_group("general options")
+    general_options.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit",
     )
 
 
@@ -63,6 +74,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(f"Download dlib {MODEL_FILENAME} landmark model file."),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False,
     )
     add_arguments(parser)
     return parser.parse_args(argv)
