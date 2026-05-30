@@ -32,6 +32,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     morph_parser = subparsers.add_parser(
         "morph",
+        add_help=False,
         help="Generate a face morphing video.",
         description="Generate a face morphing video.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -41,6 +42,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     prep_parser = subparsers.add_parser(
         "prep",
+        add_help=False,
         help="Prepare aligned square PNG face crops.",
         description=(
             "Detect faces in raw images and prepare aligned square PNG crops "
@@ -53,6 +55,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     download_parser = subparsers.add_parser(
         "download",
+        add_help=False,
         help="Download the dlib landmark model.",
         description="Download the dlib landmark model file.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,

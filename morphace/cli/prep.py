@@ -23,16 +23,65 @@ logger = logging.getLogger(__name__)
 def add_arguments(parser: argparse.ArgumentParser) -> None:
     """Add prep command arguments to an argument parser."""
     parser.add_argument(
-        "source", help="Path to a directory of images or a single image file"
+        "source",
+        help="Path to a directory of images or a single image file",
     )
     parser.add_argument(
         "aligned_dir",
         nargs="?",
         default=argparse.SUPPRESS,
-        help="Directory for aligned images (default: <source>/cropped for "
-        "directories, same directory as source for files)",
+        help=(
+            "Directory for aligned images (default: <source>/cropped for "
+            "directories, same directory as source for files)"
+        ),
     )
-    parser.add_argument(
+
+    output_options = parser.add_argument_group("output options")
+    output_options.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        default=False,
+        dest="overwrite",
+        help="Overwrite existing aligned images",
+    )
+
+    alignment_options = parser.add_argument_group("alignment options")
+    alignment_options.add_argument(
+        "-s",
+        "--output-size",
+        default=1024,
+        help="Pixel dimension of the output square crop",
+        type=int,
+    )
+    alignment_options.add_argument(
+        "-x",
+        "--x-scale",
+        default=1.0,
+        help=(
+            "Horizontal crop extent around face; >1.0 includes more "
+            "context, <1.0 crops tighter"
+        ),
+        type=float,
+    )
+    alignment_options.add_argument(
+        "-y",
+        "--y-scale",
+        default=1.0,
+        help=(
+            "Vertical crop extent around face; >1.0 includes more "
+            "context, <1.0 crops tighter"
+        ),
+        type=float,
+    )
+    alignment_options.add_argument(
+        "-e",
+        "--em-scale",
+        default=0.1,
+        help="Shift crop center from eyes toward mouth",
+        type=float,
+    )
+    alignment_options.add_argument(
         "-a",
         "--alpha",
         action="store_true",
@@ -41,27 +90,9 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
             "Use alpha channel for padded regions instead of reflected padding"
         ),
     )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug-level logging",
-    )
-    parser.add_argument(
-        "-e",
-        "--em-scale",
-        default=0.1,
-        help="Shift crop center from eyes toward mouth",
-        type=float,
-    )
-    parser.add_argument(
-        "-f",
-        "--force",
-        action="store_true",
-        default=False,
-        dest="overwrite",
-        help="Overwrite existing aligned images",
-    )
-    parser.add_argument(
+
+    model_options = parser.add_argument_group("model options")
+    model_options.add_argument(
         "-l",
         "--landmark-model",
         default=None,
@@ -72,34 +103,22 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         ),
         type=Path,
     )
-    parser.add_argument(
-        "-s",
-        "--output-size",
-        default=1024,
-        help="Pixel dimension of the output square crop",
-        type=int,
+
+    diagnostic_options = parser.add_argument_group("diagnostic options")
+    diagnostic_options.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug-level logging",
     )
-    parser.add_argument(
-        "-x",
-        "--x-scale",
-        default=1.0,
-        help=(
-            "Horizontal crop extent around face; >1.0 includes more "
-            "context, <1.0 crops tighter"
-        ),
-        type=float,
+
+    general_options = parser.add_argument_group("general options")
+    general_options.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit",
     )
-    parser.add_argument(
-        "-y",
-        "--y-scale",
-        default=1.0,
-        help=(
-            "Vertical crop extent around face; >1.0 includes more "
-            "context, <1.0 crops tighter"
-        ),
-        type=float,
-    )
-    parser.add_argument(
+    general_options.add_argument(
         "-V",
         "--version",
         action="version",
@@ -115,6 +134,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "for morphing."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False,
     )
     add_arguments(parser)
     return parser.parse_args(argv)

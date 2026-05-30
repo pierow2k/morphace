@@ -59,7 +59,15 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         "img2",
         help="Path to the second face image",
     )
-    parser.add_argument(
+
+    output_options = parser.add_argument_group("output options")
+    output_options.add_argument(
+        "-o",
+        "--output",
+        default="morph.mp4",
+        help="Path for the output MP4 video",
+    )
+    output_options.add_argument(
         "-f",
         "--force",
         action="store_true",
@@ -67,7 +75,32 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         dest="overwrite",
         help="Overwrite existing MP4 video",
     )
-    parser.add_argument(
+
+    morph_options = parser.add_argument_group("morph options")
+    morph_options.add_argument(
+        "-d",
+        "--duration",
+        type=int,
+        default=5,
+        help="Duration of the morph video in seconds",
+    )
+    morph_options.add_argument(
+        "-r",
+        "--fps",
+        type=int,
+        default=30,
+        help="Frames per second for the output video",
+    )
+    morph_options.add_argument(
+        "-m",
+        "--show-mesh",
+        action="store_true",
+        default=False,
+        help="Draw triangle mesh overlay to visualize face geometry warping",
+    )
+
+    model_options = parser.add_argument_group("model options")
+    model_options.add_argument(
         "-l",
         "--landmark-model",
         default=None,
@@ -78,39 +111,9 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
         ),
         type=Path,
     )
-    parser.add_argument(
-        "-o",
-        "--output",
-        default="morph.mp4",
-        help="Path for the output MP4 video",
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug-level logging",
-    )
-    parser.add_argument(
-        "-d",
-        "--duration",
-        type=int,
-        default=5,
-        help="Duration of the morph video in seconds",
-    )
-    parser.add_argument(
-        "-r",
-        "--fps",
-        type=int,
-        default=30,
-        help="Frames per second for the output video",
-    )
-    parser.add_argument(
-        "-m",
-        "--show-mesh",
-        action="store_true",
-        default=False,
-        help="Draw triangle mesh overlay to visualize face geometry warping",
-    )
-    parser.add_argument(
+
+    diagnostic_options = parser.add_argument_group("diagnostic options")
+    diagnostic_options.add_argument(
         "-v",
         "--show-ffmpeg-output",
         action="store_true",
@@ -120,7 +123,20 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
             "(default: only show FFmpeg errors)"
         ),
     )
-    parser.add_argument(
+    diagnostic_options.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug-level logging",
+    )
+
+    general_options = parser.add_argument_group("general options")
+    general_options.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit",
+    )
+    general_options.add_argument(
         "-V",
         "--version",
         action="version",
@@ -133,6 +149,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate a face morphing video.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False,
     )
     add_arguments(parser)
     return parser.parse_args(argv)
