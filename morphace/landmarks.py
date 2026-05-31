@@ -126,7 +126,7 @@ def get_landmarks(
 
 
 def default_landmark_model_path() -> Path:
-    """Return the default per-user location for the landmark model."""
+    """Return the default application data directory for the landmark model."""
     return (
         user_data_path(
             appname="morphace",
@@ -154,7 +154,7 @@ def resolve_landmark_model_path(model_path: str | Path | None = None) -> Path:
 
     1. Explicit CLI path.
     2. MORPHACE_LANDMARK_MODEL environment variable.
-    3. Default per-user app data directory.
+    3. Default application data directory.
 
     Args:
         model_path: Optional explicit path supplied by the caller.
