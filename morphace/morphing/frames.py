@@ -220,8 +220,8 @@ def _generate_morph_frame(  # noqa: PLR0913
     # Allocate space for final output
     morphed_frame = np.zeros(img1.shape, dtype=np.float32)
 
-    for i in range(len(tri_list)):
-        x, y, z = map(int, tri_list[i])
+    for tri in tri_list:
+        x, y, z = map(int, tri)
 
         # Use NumPy fancy indexing to get triangle vertices
         t1 = p1_arr[[x, y, z]]
