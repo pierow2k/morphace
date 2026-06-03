@@ -63,7 +63,7 @@ def _landmark_array(
     if landmarks.shape[0] != _EXPECTED_LANDMARK_COUNT:
         raise ValueError(
             f"This function requires the 68-point landmark model. "
-            f"Received {landmarks.shape[0]} points."
+            f"Received {landmarks.shape[0]} points.",
         )
 
     return landmarks
@@ -162,7 +162,7 @@ def calculate_alignment_quad(
             crop_center - crop_vec_x + crop_vec_y,  # Bottom-left.
             crop_center + crop_vec_x + crop_vec_y,  # Bottom-right.
             crop_center + crop_vec_x - crop_vec_y,  # Top-right.
-        ]
+        ],
     )
 
     # The X vector magnitude represents half the square crop width.

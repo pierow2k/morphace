@@ -33,7 +33,7 @@ def test_prepare_alignment_canvas_respects_padding_disabled() -> None:
     """Verify out-of-bounds quads are not padded when padding is disabled."""
     image = PIL.Image.new("RGB", (64, 64), color=(10, 20, 30))
     quad = np.array(
-        [[-10.0, -10.0], [-10.0, 40.0], [40.0, 40.0], [40.0, -10.0]]
+        [[-10.0, -10.0], [-10.0, 40.0], [40.0, 40.0], [40.0, -10.0]],
     )
 
     prepared_image, prepared_quad = prepare_alignment_canvas(
@@ -59,7 +59,7 @@ def test_prepare_alignment_canvas_pads_with_requested_alpha_mode(
     """Verify padded canvases use RGB or RGBA output as requested."""
     image = PIL.Image.new("RGB", (64, 64), color=(10, 20, 30))
     quad = np.array(
-        [[-10.0, -10.0], [-10.0, 40.0], [40.0, 40.0], [40.0, -10.0]]
+        [[-10.0, -10.0], [-10.0, 40.0], [40.0, 40.0], [40.0, -10.0]],
     )
     original_quad = quad.copy()
 

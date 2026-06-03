@@ -72,7 +72,8 @@ def video_writer_context(
         config.output,
     ]
 
-    process = Popen(cmd, stdin=PIPE)
+    # We trust the command construction and are not using shell=True.
+    process = Popen(cmd, stdin=PIPE)  # noqa: S603
 
     if process.stdin is None:
         raise RuntimeError("Unable to open FFmpeg input stream.")
@@ -97,5 +98,5 @@ def video_writer_context(
             cmd_str = " ".join(cmd)
             raise RuntimeError(
                 f"FFmpeg failed with return code {return_code}.\n"
-                f"Command: {cmd_str}"
+                f"Command: {cmd_str}",
             )

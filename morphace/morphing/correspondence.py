@@ -152,7 +152,9 @@ def align_faces(
     # Process both images using a loop.
     # Zip the images with their corresponding output lists
     for img, out_list in zip(
-        [img1_cropped, img2_cropped], [list1, list2], strict=True
+        [img1_cropped, img2_cropped],
+        [list1, list2],
+        strict=True,
     ):
         # Only process the primary face. Processing multiple faces would
         # break the point correspondence math.

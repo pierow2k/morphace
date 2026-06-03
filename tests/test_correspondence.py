@@ -41,7 +41,9 @@ BOUNDARY_POINTS_COUNT = 8
     ],
 )
 def test_get_boundary_points(
-    h: int, w: int, expected: list[tuple[int, int]]
+    h: int,
+    w: int,
+    expected: list[tuple[int, int]],
 ) -> None:
     """Verify the calculation of boundary points using various dimensions."""
     result = _get_boundary_points(h, w)

@@ -18,13 +18,17 @@ class full_object_detection:
 
 class frontal_face_detector:
     def __call__(
-        self, image: NDArray[Any], upsample_num_times: int = ...
+        self,
+        image: NDArray[Any],
+        upsample_num_times: int = ...,
     ) -> Sequence[rectangle]: ...
 
 class shape_predictor:
     def __init__(self, predictor_model_path: str) -> None: ...
     def __call__(
-        self, image: NDArray[Any], box: rectangle
+        self,
+        image: NDArray[Any],
+        box: rectangle,
     ) -> full_object_detection: ...
 
 def get_frontal_face_detector() -> frontal_face_detector: ...

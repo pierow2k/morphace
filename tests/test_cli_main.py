@@ -39,7 +39,7 @@ def test_main_dispatches_morph_command(
             "--fps",
             str(MORPH_FPS),
             "--show-mesh",
-        ]
+        ],
     )
 
     assert result == MORPH_RETURN_CODE
@@ -72,7 +72,7 @@ def test_main_dispatches_prep_command(
             "--output-size",
             str(PREP_OUTPUT_SIZE),
             "--alpha",
-        ]
+        ],
     )
 
     assert result == PREP_RETURN_CODE
@@ -97,7 +97,7 @@ def test_main_dispatches_download_command(
     monkeypatch.setattr(cli_main.download, "run", fake_run)
 
     result = cli_main.main(
-        ["download", "--save-to", "model", "--force", "--debug"]
+        ["download", "--save-to", "model", "--force", "--debug"],
     )
 
     assert result == DOWNLOAD_RETURN_CODE

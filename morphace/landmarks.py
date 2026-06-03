@@ -57,7 +57,7 @@ def _load_predictor(model_path: str) -> dlib.shape_predictor:
         raise FileNotFoundError(
             f"Dlib model file not found at: {path}\n"
             "Pass --landmark-model, set MORPHACE_LANDMARK_MODEL, "
-            "or place the model file in the expected location."
+            "or place the model file in the expected location.",
         )
 
     return dlib.shape_predictor(str(path))
@@ -141,7 +141,7 @@ def _require_file(path: Path, source: str) -> Path:
     """Return path if it exists, otherwise raise a helpful error."""
     if not path.is_file():
         raise LandmarkModelNotFoundError(
-            f"{source} does not point to an existing file: {path}"
+            f"{source} does not point to an existing file: {path}",
         )
 
     return path
@@ -179,5 +179,5 @@ def resolve_landmark_model_path(model_path: str | Path | None = None) -> Path:
     raise LandmarkModelNotFoundError(
         "Could not find the dlib landmark model. "
         f"Pass --landmark-model /path/to/{MODEL_FILENAME}, set "
-        f"{MODEL_ENV_VAR}, or place the file at {default_path}."
+        f"{MODEL_ENV_VAR}, or place the file at {default_path}.",
     )

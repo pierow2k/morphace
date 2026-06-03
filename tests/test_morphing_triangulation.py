@@ -80,7 +80,7 @@ def test_compute_delaunay_triangles_basic() -> None:
             [90.0, 10.0],  # -> (90, 10) idx 1
             [10.0, 90.0],  # -> (10, 90) idx 2
             [90.0, 90.0],  # -> (90, 90) idx 3
-        ]
+        ],
     )
 
     triangles = compute_delaunay_triangles(width, height, landmarks)
