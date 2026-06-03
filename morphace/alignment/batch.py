@@ -80,9 +80,8 @@ def _source_image_paths(source: Path) -> list[Path]:
             if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
         ]
 
-    raise ValueError(
-        f"Source path does not exist or is not accessible: {source}",
-    )
+    message = f"Source path does not exist or is not accessible: {source}"
+    raise ValueError(message)
 
 
 def _align_detected_faces(

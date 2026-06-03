@@ -134,7 +134,8 @@ def align_faces(
         coordinates for both images.
     """
     if detector is None or predictor is None:
-        raise RuntimeError("Dlib models are not loaded. Cannot process faces.")
+        message = "Dlib models are not loaded. Cannot process faces."
+        raise RuntimeError(message)
 
     # Crop images to matching dimensions.
     img_list = _match_image_sizes(image1, image2)

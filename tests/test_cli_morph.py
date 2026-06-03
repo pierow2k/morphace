@@ -282,7 +282,8 @@ def test_main_returns_error_when_model_is_missing(
     def fake_resolve_landmark_model_path(model_path: Path | None) -> Path:
         """Raise the model resolution error."""
         del model_path
-        raise LandmarkModelNotFoundError("missing model")
+        message = "missing model"
+        raise LandmarkModelNotFoundError(message)
 
     def fake_morph_faces(*args: object, **kwargs: object) -> Path:
         """Fail if the workflow is unexpectedly called."""
@@ -364,7 +365,8 @@ def test_main_returns_error_for_runtime_failure(
     def fake_morph_faces(*args: object, **kwargs: object) -> Path:
         """Raise an unexpected runtime error."""
         del args, kwargs
-        raise RuntimeError("ffmpeg failed")
+        message = "ffmpeg failed"
+        raise RuntimeError(message)
 
     def fake_imread(path: str) -> np.ndarray:
         """Return a fake image."""

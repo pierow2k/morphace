@@ -61,10 +61,11 @@ def _landmark_array(
     landmarks = np.array(face_landmarks)
 
     if landmarks.shape[0] != _EXPECTED_LANDMARK_COUNT:
-        raise ValueError(
+        message = (
             f"This function requires the 68-point landmark model. "
-            f"Received {landmarks.shape[0]} points.",
+            f"Received {landmarks.shape[0]} points."
         )
+        raise ValueError(message)
 
     return landmarks
 
@@ -131,7 +132,8 @@ def calculate_alignment_quad(
     # Normalize the vector before applying face-size scaling.
     x_norm = np.hypot(*crop_vec_x)
     if x_norm < _FLOAT_TOLERANCE:
-        raise ValueError("Degenerate face geometry: alignment vector is zero.")
+        message = "Degenerate face geometry: alignment vector is zero."
+        raise ValueError(message)
 
     crop_vec_x /= x_norm
 

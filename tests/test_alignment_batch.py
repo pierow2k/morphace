@@ -422,7 +422,8 @@ def test_align_detected_faces_logs_alignment_failures(
         del src_file, landmarks, options
         attempts.append(dst_file)
         if len(attempts) == 1:
-            raise ValueError("cannot align")
+            message = "cannot align"
+            raise ValueError(message)
 
     monkeypatch.setattr(batch, "get_detector", fake_get_detector)
     monkeypatch.setattr(batch, "get_predictor", fake_get_predictor)
@@ -475,7 +476,8 @@ def test_align_faces_logs_landmark_detection_failures(
         """Raise for the first image and capture the second."""
         del config, detector, predictor
         if raw_img_path == first_image:
-            raise RuntimeError("detection failed")
+            message = "detection failed"
+            raise RuntimeError(message)
         processed.append(raw_img_path)
 
     monkeypatch.setattr(batch, "get_detector", fake_get_detector)
