@@ -1,13 +1,21 @@
 [build-system]
-requires = ["hatchling >= 1.26"]
+requires = ["hatchling >= 1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
 name = "morphace"
 version = "0.0.1"
-description = "Create a morphing sequence betwen two faces"
+description = "Generate a face-morphing video from two face images"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE.TXT"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
 dependencies = [
   "dlib==20.0.1",
   "numpy==2.4.5",
@@ -21,7 +29,6 @@ dependencies = [
 
 [project.scripts]
 morphace = "morphace.cli.main:main"
-
 
 [dependency-groups]
 dev = [
@@ -48,7 +55,6 @@ testpaths = ["tests"]
 addopts = [
   "--cov=morphace",
   "--cov-branch",
-  # "--cov-report=term-missing:skip-covered",
   "--cov-report=html",
 ]
 
@@ -58,7 +64,6 @@ source = ["morphace"]
 
 [tool.coverage.report]
 show_missing = true
-# skip_covered = true
 skip_empty = true
 exclude_also = [
   "if TYPE_CHECKING:",
@@ -169,52 +174,29 @@ stubPath = "typings"
 venvPath = "."
 venv = ".venv"
 typeCheckingMode = "standard"
-pythonVersion = "3.13"
+pythonVersion = "3.12"
 reportMissingTypeStubs = false
 reportMissingModuleSource = false
 
 [tool.pylint.main]
-py-version = "3.13"
+py-version = "3.12"
 ignore = ["third_party"]
 persistent = false
 jobs = 4
-unsafe-load-any-extension = false
-load-plugins = []
 
 [tool.pylint.messages_control]
 disable = [
-  "R",
-  "abstract-method",
-  "arguments-differ",
-  "attribute-defined-outside-init",
-  "c-extension-no-member",
-  "consider-using-enumerate",
-  "fixme",
-  "global-statement",
-  "implicit-str-concat",
-  "import-error",
-  "locally-disabled",
-  "missing-function-docstring",
-  "no-init",
-  "no-member",
-  "no-name-in-module",
-  "suppressed-message",
-  "unnecessary-pass",
-  "useless-else-on-loop",
-  "useless-suppression",
-  "wrong-import-order",
+  "R0801", # Similar lines
+  "R0903", # Too few public methods
+  "R0913", # Too many arguments
+  "R0914", # Too many local variables
+  "R0917", # Too many positional arguments
+  "no-member", # Member not found
 ]
-
-[tool.pylint.reports]
-output-format = "text"
-reports = false
-evaluation = "10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)"
 
 [tool.pylint.basic]
 good-names = ["main", "_"]
 bad-names = []
-name-group = []
-include-naming-hint = false
 property-classes = [
   "abc.abstractproperty",
   "cached_property.cached_property",
@@ -235,19 +217,6 @@ method-rgx = '''(?x)^(?:(?P<exempt>_[a-z0-9_]+__|runTest|setUp|tearDown|setUpTes
 no-docstring-rgx = "(__.*__|main|test.*|.*test|.*Test)$"
 docstring-min-length = 12
 
-[tool.pylint.typecheck]
-contextmanager-decorators = [
-  "contextlib.contextmanager",
-  "contextlib2.contextmanager",
-]
-ignored-modules = []
-ignored-classes = [
-  "optparse.Values",
-  "thread._local",
-  "_thread._local",
-]
-generated-members = []
-
 [tool.pylint.format]
 max-line-length = 80
 ignore-long-lines = '''(?x)(
@@ -255,9 +224,6 @@ ignore-long-lines = '''(?x)(
   ^\s*(from\s+\S+\s+)?import\s+.+$)'''
 single-line-if-stmt = true
 max-module-lines = 99999
-indent-string = "    "
-indent-after-paren = 4
-expected-line-ending-format = ""
 
 [tool.pylint.miscellaneous]
 notes = ["TODO"]
@@ -266,64 +232,19 @@ notes = ["TODO"]
 check-quote-consistency = true
 
 [tool.pylint.variables]
-init-import = false
 dummy-variables-rgx = "^\\*{0,2}(_$|unused_|dummy_)"
-additional-builtins = []
-callbacks = [
-  "cb_",
-  "_cb",
-]
-redefining-builtins-modules = [
-  "six",
-  "six.moves",
-  "past.builtins",
-  "future.builtins",
-  "functools",
-]
 
 [tool.pylint.logging]
-logging-modules = [
-  "logging",
-  "absl.logging",
-  "tensorflow.io.logging",
-]
+logging-modules = ["logging"]
 
 [tool.pylint.similarities]
-min-similarity-lines = 4
-ignore-comments = true
-ignore-docstrings = true
 ignore-imports = false
 
 [tool.pylint.imports]
-deprecated-modules = [
-  "regsub",
-  "TERMIOS",
-  "Bastion",
-  "rexec",
-  "sets",
-]
-known-standard-library = []
-known-third-party = [
-  "enchant",
-  "absl",
-]
 analyse-fallback-blocks = false
 
 [tool.pylint.classes]
-defining-attr-methods = [
-  "__init__",
-  "__new__",
-  "setUp",
-]
-exclude-protected = [
-  "_asdict",
-  "_fields",
-  "_replace",
-  "_source",
-  "_make",
-]
 valid-classmethod-first-arg = [
   "cls",
   "class_",
 ]
-valid-metaclass-classmethod-first-arg = ["mcs"]
