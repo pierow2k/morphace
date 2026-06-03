@@ -334,9 +334,8 @@ def warp_aligned_face(
         The warped and resized face image.
     """
     if quad.shape != (4, 2):
-        raise ValueError(
-            f"Invalid quad shape: expected (4, 2), got {quad.shape}",
-        )
+        message = f"Invalid quad shape: expected (4, 2), got {quad.shape}"
+        raise ValueError(message)
 
     # Pillow's transform samples from source pixel centers. The quad is based
     # on NumPy-style pixel-corner coordinates, so shift by 0.5 for alignment.

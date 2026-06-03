@@ -76,12 +76,14 @@ def video_writer_context(
     process = Popen(cmd, stdin=PIPE)  # noqa: S603
 
     if process.stdin is None:
-        raise RuntimeError("Unable to open FFmpeg input stream.")
+        message = "Unable to open FFmpeg input stream."
+        raise RuntimeError(message)
 
     try:
         yield process.stdin, num_images
     except BrokenPipeError:
-        raise RuntimeError("FFmpeg process ended unexpectedly.") from None
+        message = "FFmpeg process ended unexpectedly."
+        raise RuntimeError(message) from None
     except Exception:
         # Safety net: ensure subprocess is terminated on other exceptions.
         process.terminate()
@@ -96,7 +98,8 @@ def video_writer_context(
 
         if return_code != 0:
             cmd_str = " ".join(cmd)
-            raise RuntimeError(
+            error_msg = (
                 f"FFmpeg failed with return code {return_code}.\n"
-                f"Command: {cmd_str}",
+                f"Command: {cmd_str}"
             )
+            raise RuntimeError(error_msg)

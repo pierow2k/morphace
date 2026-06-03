@@ -111,7 +111,8 @@ def test_main_returns_error_when_download_fails(
     def fake_download_dlib_model(model_path: Path, overwrite: bool) -> None:
         """Raise an expected download failure."""
         del model_path, overwrite
-        raise RuntimeError("download failed")
+        message = "download failed"
+        raise RuntimeError(message)
 
     monkeypatch.setattr(
         download,
@@ -154,7 +155,8 @@ def test_download_dlib_model_skips_existing_file(
 
     def fake_show_license_info() -> None:
         """Fail if the skip path unexpectedly shows the license notice."""
-        raise AssertionError("license notice should not be shown")
+        message = "license notice should not be shown"
+        raise AssertionError(message)
 
     def fake_get(
         url: str,
@@ -164,7 +166,8 @@ def test_download_dlib_model_skips_existing_file(
     ) -> FakeResponse:
         """Fail if the skip path unexpectedly downloads the model."""
         del url, stream, timeout
-        raise AssertionError("download should not be attempted")
+        message = "download should not be attempted"
+        raise AssertionError(message)
 
     monkeypatch.setattr(download, "show_license_info", fake_show_license_info)
     monkeypatch.setattr(download.requests, "get", fake_get)
@@ -296,7 +299,8 @@ def test_download_dlib_model_handles_decompress_error_before_output_exists(
         """Raise before the model output file is opened."""
         mode = str(args[0]) if args else "r"
         if self.suffix == ".tmp" and "r" in mode:
-            raise OSError("cannot read temp file")
+            message = "cannot read temp file"
+            raise OSError(message)
         del args, kwargs
         return original_open(self, mode)
 

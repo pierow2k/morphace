@@ -209,7 +209,8 @@ def test_main_returns_error_when_model_is_missing(
     ) -> Path:
         """Raise the same model-resolution error used by the morph CLI."""
         del model_path
-        raise LandmarkModelNotFoundError("missing model")
+        message = "missing model"
+        raise LandmarkModelNotFoundError(message)
 
     monkeypatch.setattr(prep, "align_faces", fake_align_faces)
     monkeypatch.setattr(

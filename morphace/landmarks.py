@@ -54,11 +54,12 @@ def _load_predictor(model_path: str) -> dlib.shape_predictor:
     path = Path(model_path)
 
     if not path.is_file():
-        raise FileNotFoundError(
+        message = (
             f"Dlib model file not found at: {path}\n"
             "Pass --landmark-model, set MORPHACE_LANDMARK_MODEL, "
-            "or place the model file in the expected location.",
+            "or place the model file in the expected location."
         )
+        raise FileNotFoundError(message)
 
     return dlib.shape_predictor(str(path))
 
@@ -91,7 +92,8 @@ def detect_all_landmarks(
 
     if len(detections) == 0:
         logger.error("Unable to find a face in the image.")
-        raise NoFaceFoundError("Unable to find a face in the image.")
+        message = "Unable to find a face in the image."
+        raise NoFaceFoundError(message)
 
     for rect in detections:
         shape = predictor(img, rect)
@@ -117,7 +119,8 @@ def get_landmarks(
         RuntimeError: If either dlib model helper is missing.
     """
     if detector is None or predictor is None:
-        raise RuntimeError("Dlib models are not loaded. Cannot process faces.")
+        message = "Dlib models are not loaded. Cannot process faces."
+        raise RuntimeError(message)
 
     img_path = pathlib.Path(image).expanduser().resolve()
     img = dlib.load_rgb_image(str(img_path))
@@ -140,9 +143,8 @@ def default_landmark_model_path() -> Path:
 def _require_file(path: Path, source: str) -> Path:
     """Return path if it exists, otherwise raise a helpful error."""
     if not path.is_file():
-        raise LandmarkModelNotFoundError(
-            f"{source} does not point to an existing file: {path}",
-        )
+        message = f"{source} does not point to an existing file: {path}"
+        raise LandmarkModelNotFoundError(message)
 
     return path
 
@@ -176,8 +178,9 @@ def resolve_landmark_model_path(model_path: str | Path | None = None) -> Path:
     if default_path.is_file():
         return default_path
 
-    raise LandmarkModelNotFoundError(
+    message = (
         "Could not find the dlib landmark model. "
         f"Pass --landmark-model /path/to/{MODEL_FILENAME}, set "
-        f"{MODEL_ENV_VAR}, or place the file at {default_path}.",
+        f"{MODEL_ENV_VAR}, or place the file at {default_path}."
     )
+    raise LandmarkModelNotFoundError(message)

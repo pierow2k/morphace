@@ -35,14 +35,16 @@ def test_video_writer_context_terminates_on_exception(
         output="output.mp4",
     )
 
+    message = "Inside context error"
+
     with (
         pytest.raises(
             ValueError,
-            match="Inside context error",
+            match=message,
         ),
         video_writer_context(config),
     ):
-        raise ValueError("Inside context error")
+        raise ValueError(message)
 
     mock_process.terminate.assert_called_once()
     # verify finally block closed stdin
