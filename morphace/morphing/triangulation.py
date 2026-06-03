@@ -65,7 +65,7 @@ def _extract_triangle_indices(
             and pt3 in point_indices
         ):
             triangles.append(
-                (point_indices[pt1], point_indices[pt2], point_indices[pt3])
+                (point_indices[pt1], point_indices[pt2], point_indices[pt3]),
             )
 
     return triangles

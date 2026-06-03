@@ -171,7 +171,7 @@ def test_get_landmarks_loads_image_and_detects(
             str(fake_image_path),
             detector=mock_detector,
             predictor=mock_predictor,
-        )
+        ),
     )
 
     assert results == expected_landmarks
@@ -183,12 +183,15 @@ def test_default_landmark_model_path() -> None:
     """Verify default_landmark_model_path uses platformdirs correctly."""
     fake_base = Path("/fake/user/data")
     with patch(
-        "morphace.landmarks.user_data_path", return_value=fake_base
+        "morphace.landmarks.user_data_path",
+        return_value=fake_base,
     ) as mock_user_data:
         result = default_landmark_model_path()
         assert result == fake_base / MODEL_FILENAME
         mock_user_data.assert_called_once_with(
-            appname="morphace", appauthor=False, ensure_exists=True
+            appname="morphace",
+            appauthor=False,
+            ensure_exists=True,
         )
 
 
@@ -240,7 +243,8 @@ def test_load_predictor_raises_if_model_missing(
 
 
 def test_load_predictor_loads_existing_model_path(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Verify _load_predictor loads the model when the file exists."""
     fake_model = tmp_path / "shape_predictor_68_face_landmarks_GTX.dat"
@@ -262,7 +266,8 @@ def test_load_predictor_loads_existing_model_path(
 
 
 def test_load_predictor_is_cached(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Verify _load_predictor returns a cached instance on subsequent calls."""
     fake_model = tmp_path / "shape_predictor_68_face_landmarks_GTX.dat"
@@ -298,7 +303,7 @@ def test_detect_all_landmarks_returns_landmarks_for_each_face() -> None:
             img,
             detector,
             predictor,
-        )
+        ),
     )
 
     assert result == [
@@ -306,7 +311,7 @@ def test_detect_all_landmarks_returns_landmarks_for_each_face() -> None:
             (10, 20),
             (30, 40),
             (50, 60),
-        ]
+        ],
     ]
     detector.assert_called_once_with(img, 1)
     predictor.assert_called_once_with(img, fake_rect)
@@ -325,7 +330,7 @@ def test_detect_all_landmarks_raises_when_no_faces_found() -> None:
                 img,
                 detector,
                 predictor,
-            )
+            ),
         )
 
     detector.assert_called_once_with(img, 1)

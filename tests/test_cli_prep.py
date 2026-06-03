@@ -55,7 +55,7 @@ def test_main_builds_alignment_config(
             "--em-scale",
             "0.2",
             "--alpha",
-        ]
+        ],
     )
 
     assert result == 0
@@ -71,7 +71,7 @@ def test_main_builds_alignment_config(
                 em_scale=0.2,
                 alpha=True,
             ),
-        )
+        ),
     ]
 
 

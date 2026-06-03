@@ -86,7 +86,7 @@ def _apply_affine_transform(
 def _bounding_rect(triangle: np.ndarray | list[FloatPoint]) -> CvRect:
     """Return the OpenCV bounding rectangle for a triangle."""
     x, y, width, height = cv2.boundingRect(
-        np.asarray([triangle], dtype=np.float32)
+        np.asarray([triangle], dtype=np.float32),
     )
     return (x, y, width, height)
 
@@ -180,10 +180,16 @@ def _morph_triangle(
 
     size = (rect_dest[2], rect_dest[3])
     warp_img1 = _apply_affine_transform(
-        img1_rect, tri_src1_offset, tri_dest_offset, size
+        img1_rect,
+        tri_src1_offset,
+        tri_dest_offset,
+        size,
     )
     warp_img2 = _apply_affine_transform(
-        img2_rect, tri_src2_offset, tri_dest_offset, size
+        img2_rect,
+        tri_src2_offset,
+        tri_dest_offset,
+        size,
     )
 
     # Alpha blend rectangular patches
@@ -232,7 +238,13 @@ def _generate_morph_frame(  # noqa: PLR0913
 
         if show_triangles:
             pts = t.reshape((-1, 1, 2)).astype(np.int32)
-            cv2.polylines(morphed_frame, [pts], True, (255, 255, 255), 1)
+            cv2.polylines(
+                morphed_frame,
+                [pts],
+                isClosed=True,
+                color=(255, 255, 255),
+                thickness=1,
+            )
 
     return np.clip(morphed_frame, 0, 255)
 

@@ -106,7 +106,7 @@ def show_license_info() -> None:
         "\n"
         "https://ibug.doc.ic.ac.uk/resources/facial-point-annotations/\n"
         "https://github.com/davisking/dlib-models/"
-        "#shape_predictor_68_face_landmarks_gtxdatbz2\n"
+        "#shape_predictor_68_face_landmarks_gtxdatbz2\n",
     )
 
 
@@ -140,7 +140,8 @@ def download_dlib_model(model_path: Path, overwrite: bool) -> None:
 
     if not overwrite and model_path.exists():
         logger.info(
-            "File '%s' already exists. Use --force to overwrite.", model_path
+            "File '%s' already exists. Use --force to overwrite.",
+            model_path,
         )
         return
 
@@ -155,7 +156,9 @@ def download_dlib_model(model_path: Path, overwrite: bool) -> None:
         # Write to temporary file for atomic replacement on success
         # delete=False allows manual rename after close; we clean up explicitly
         with tempfile.NamedTemporaryFile(
-            dir=model_path.parent, suffix=".tmp", delete=False
+            dir=model_path.parent,
+            suffix=".tmp",
+            delete=False,
         ) as tmp_file:
             tmp_path = Path(tmp_file.name)
 
@@ -195,7 +198,8 @@ def download_dlib_model(model_path: Path, overwrite: bool) -> None:
         raise
     except OSError as e:
         logger.error(  # noqa: TRY400
-            "File system error saving the model: %s", e
+            "File system error saving the model: %s",
+            e,
         )
         raise
 

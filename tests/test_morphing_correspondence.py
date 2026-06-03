@@ -105,6 +105,6 @@ def test_align_faces_builds_correspondences(
                 (3, 1),
                 (1, 3),
                 (1, 1),
-            ]
+            ],
         ),
     )

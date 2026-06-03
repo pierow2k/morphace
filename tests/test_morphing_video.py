@@ -24,11 +24,15 @@ def test_video_writer_context_terminates_on_exception(
     mock_process.wait.return_value = 0
 
     monkeypatch.setattr(
-        "morphace.morphing.video.Popen", lambda *_, **__: mock_process
+        "morphace.morphing.video.Popen",
+        lambda *_, **__: mock_process,
     )
 
     config = MorphVideoConfig(
-        duration=5, frame_rate=30, size=(480, 640), output="output.mp4"
+        duration=5,
+        frame_rate=30,
+        size=(480, 640),
+        output="output.mp4",
     )
 
     with (
@@ -55,11 +59,15 @@ def test_video_writer_context_closes_stdin_if_not_closed(
     mock_process.wait.return_value = 0
 
     monkeypatch.setattr(
-        "morphace.morphing.video.Popen", lambda *_, **__: mock_process
+        "morphace.morphing.video.Popen",
+        lambda *_, **__: mock_process,
     )
 
     config = MorphVideoConfig(
-        duration=5, frame_rate=30, size=(480, 640), output="output.mp4"
+        duration=5,
+        frame_rate=30,
+        size=(480, 640),
+        output="output.mp4",
     )
 
     with video_writer_context(config):
@@ -78,11 +86,15 @@ def test_video_writer_context_skips_closing_if_already_closed(
     mock_process.wait.return_value = 0
 
     monkeypatch.setattr(
-        "morphace.morphing.video.Popen", lambda *_, **__: mock_process
+        "morphace.morphing.video.Popen",
+        lambda *_, **__: mock_process,
     )
 
     config = MorphVideoConfig(
-        duration=5, frame_rate=30, size=(480, 640), output="output.mp4"
+        duration=5,
+        frame_rate=30,
+        size=(480, 640),
+        output="output.mp4",
     )
 
     with video_writer_context(config):
@@ -158,11 +170,15 @@ def test_video_writer_context_errors_when_stdin_is_missing(
     mock_process.stdin = None
 
     monkeypatch.setattr(
-        "morphace.morphing.video.Popen", lambda *_, **__: mock_process
+        "morphace.morphing.video.Popen",
+        lambda *_, **__: mock_process,
     )
 
     config = MorphVideoConfig(
-        duration=5, frame_rate=30, size=(480, 640), output="output.mp4"
+        duration=5,
+        frame_rate=30,
+        size=(480, 640),
+        output="output.mp4",
     )
 
     with (
@@ -184,11 +200,15 @@ def test_video_writer_context_converts_broken_pipe_to_runtime_error(
     mock_process.wait.return_value = 0
 
     monkeypatch.setattr(
-        "morphace.morphing.video.Popen", lambda *_, **__: mock_process
+        "morphace.morphing.video.Popen",
+        lambda *_, **__: mock_process,
     )
 
     config = MorphVideoConfig(
-        duration=5, frame_rate=30, size=(480, 640), output="output.mp4"
+        duration=5,
+        frame_rate=30,
+        size=(480, 640),
+        output="output.mp4",
     )
 
     with (
@@ -212,11 +232,15 @@ def test_video_writer_context_raises_when_ffmpeg_exits_nonzero(
     mock_process.wait.return_value = 7
 
     monkeypatch.setattr(
-        "morphace.morphing.video.Popen", lambda *_, **__: mock_process
+        "morphace.morphing.video.Popen",
+        lambda *_, **__: mock_process,
     )
 
     config = MorphVideoConfig(
-        duration=5, frame_rate=30, size=(480, 640), output="output.mp4"
+        duration=5,
+        frame_rate=30,
+        size=(480, 640),
+        output="output.mp4",
     )
 
     with (

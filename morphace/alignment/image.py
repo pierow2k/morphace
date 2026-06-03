@@ -335,7 +335,7 @@ def warp_aligned_face(
     """
     if quad.shape != (4, 2):
         raise ValueError(
-            f"Invalid quad shape: expected (4, 2), got {quad.shape}"
+            f"Invalid quad shape: expected (4, 2), got {quad.shape}",
         )
 
     # Pillow's transform samples from source pixel centers. The quad is based
@@ -360,11 +360,12 @@ def warp_aligned_face(
             # Upscaling: BICUBIC avoids some LANCZOS ringing artifacts.
             resample = PIL.Image.Resampling.BICUBIC
             logger.warning(
-                "Output size is larger than transform size; upscaling image."
+                "Output size is larger than transform size; upscaling image.",
             )
 
         image = image.resize(
-            (options.output_size, options.output_size), resample
+            (options.output_size, options.output_size),
+            resample,
         )
 
     return image

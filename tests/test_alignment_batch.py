@@ -79,7 +79,7 @@ def test_align_faces_uses_shared_model_helpers(
                 em_scale=0.2,
                 alpha=True,
             ),
-        )
+        ),
     )
 
     assert calls["detector_loaded"] is True
@@ -151,7 +151,7 @@ def test_align_faces_skips_existing_output_without_overwrite(
             source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-        )
+        ),
     )
 
     assert not called_get_landmarks
@@ -203,7 +203,7 @@ def test_align_faces_ignores_directories_and_non_images(
             source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-        )
+        ),
     )
 
     assert processed == [image_path]
@@ -251,7 +251,7 @@ def test_align_faces_processes_single_image_source(
             source=image_path,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-        )
+        ),
     )
 
     assert processed == [image_path]
@@ -299,7 +299,7 @@ def test_align_faces_ignores_single_non_image_source(
             source=source_file,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-        )
+        ),
     )
 
     assert not processed
@@ -331,7 +331,7 @@ def test_align_faces_rejects_invalid_source_before_loading_models(
                 source=missing_source,
                 aligned_dir=aligned_dir,
                 landmark_model_path=Path("resolved_model.dat"),
-            )
+            ),
         )
 
     assert not called_get_detector
@@ -375,7 +375,7 @@ def test_align_faces_skips_existing_single_image_without_overwrite(
             source=image_path,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-        )
+        ),
     )
 
     assert not called_get_landmarks
@@ -434,7 +434,7 @@ def test_align_detected_faces_logs_alignment_failures(
             source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-        )
+        ),
     )
 
     assert attempts == [
@@ -491,7 +491,7 @@ def test_align_faces_logs_landmark_detection_failures(
             source=source_dir,
             aligned_dir=aligned_dir,
             landmark_model_path=Path("resolved_model.dat"),
-        )
+        ),
     )
 
     assert processed == [second_image]

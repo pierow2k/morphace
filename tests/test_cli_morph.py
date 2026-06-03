@@ -74,7 +74,7 @@ def test_main_builds_morph_config(
             "--fps",
             "24",
             "--show-mesh",
-        ]
+        ],
     )
 
     assert result == 0
@@ -135,7 +135,7 @@ def test_main_sets_verbose_ffmpeg_loglevel(
             str(img2),
             *_output_args(tmp_path),
             "--show-ffmpeg-output",
-        ]
+        ],
     )
 
     assert result == 0
@@ -415,7 +415,9 @@ def test_main_appends_mp4_extension(
     monkeypatch.setattr(morph.shutil, "which", lambda _: "ffmpeg")
     monkeypatch.setattr(morph.cv2, "imread", lambda _: _image())
     monkeypatch.setattr(
-        morph, "resolve_landmark_model_path", lambda _: Path("r.dat")
+        morph,
+        "resolve_landmark_model_path",
+        lambda _: Path("r.dat"),
     )
     monkeypatch.setattr(morph, "morph_faces", fake_morph_faces)
 

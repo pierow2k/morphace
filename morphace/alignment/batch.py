@@ -39,7 +39,7 @@ class AlignmentConfig:
     aligned_dir: Path
     landmark_model_path: Path
     face_alignment: FaceAlignmentOptions = field(
-        default_factory=FaceAlignmentOptions
+        default_factory=FaceAlignmentOptions,
     )
 
 
@@ -81,7 +81,7 @@ def _source_image_paths(source: Path) -> list[Path]:
         ]
 
     raise ValueError(
-        f"Source path does not exist or is not accessible: {source}"
+        f"Source path does not exist or is not accessible: {source}",
     )
 
 

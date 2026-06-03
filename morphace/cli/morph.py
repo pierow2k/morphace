@@ -262,11 +262,12 @@ def run(args: argparse.Namespace) -> int:
     try:
         morph_faces(validated.image1, validated.image2, config, args.show_mesh)
         logger.info(
-            "Morphing complete. Video saved to %s", validated.output_filename
+            "Morphing complete. Video saved to %s",
+            validated.output_filename,
         )
     except NoFaceFoundError:
         logger.error(  # noqa: TRY400
-            "Error: Could not detect a face in one or both images."
+            "Error: Could not detect a face in one or both images.",
         )
         return 1
     except RuntimeError:
