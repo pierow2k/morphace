@@ -4,6 +4,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 
+import cloudflare from "@astrojs/cloudflare";
+
 const docsDir = new URL("./src/content/docs/", import.meta.url).pathname;
 
 const faviconHead = [
@@ -246,7 +248,10 @@ export default defineConfig({
       },
     }),
   ],
+
   vite: {
     plugins: [tailwindcss()],
   },
+
+  adapter: cloudflare()
 });
