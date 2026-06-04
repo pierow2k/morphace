@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "morphace"
-version = "1.0.0"
+version = "1.0.1"
 description = "Generate a face-morphing video from two face images"
 readme = "README.md"
 requires-python = ">=3.12"
