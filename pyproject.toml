@@ -21,9 +21,9 @@ dependencies = [
   "numpy==2.4.5",
   "opencv-python==4.13.0.92",
   "pillow==12.2.0",
+  "platformdirs==4.9.6",
   "requests==2.34.2",
   "scipy==1.17.1",
-  "platformdirs==4.9.6",
   "tqdm==4.67.3"
 ]
 
@@ -32,12 +32,12 @@ morphace = "morphace.cli.main:main"
 
 [dependency-groups]
 dev = [
-  "pipdeptree==2.35.2",
-  "pylint==4.0.5",
-  "pyright==1.1.409",
-  "pytest==9.0.3",
-  "pytest-cov==7.1.0",
-  "ruff==0.15.13",
+  "pipdeptree>=2.35.2",
+  "pylint>=4.0.5",
+  "pyright>=1.1.410",
+  "pytest>=9.0.3",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.15.13",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -77,27 +77,12 @@ directory = "htmlcov"
 
 [tool.ruff]
 exclude = [
-  ".bzr",
-  ".direnv",
-  ".eggs",
   ".git",
-  ".git-rewrite",
-  ".hg",
-  ".ipynb_checkpoints",
-  ".mypy_cache",
   ".nox",
-  ".pants.d",
-  ".pyenv",
   ".pytest_cache",
-  ".pytype",
   ".ruff_cache",
-  ".svn",
-  ".tox",
   ".venv",
   ".vscode",
-  "__pypackages__",
-  "_build",
-  "buck-out",
   "build",
   "dist",
   "node_modules",
@@ -106,50 +91,19 @@ exclude = [
 ]
 line-length = 80
 indent-width = 4
-target-version = "py313"
+target-version = "py312"
 
 [tool.ruff.lint]
-select = [
-  "A",
-  "ANN",
-  "ARG",
-  "B",
-  "C4",
-  "D",
-  "E",
-  "ERA",
-  "F",
-  "FA",
-  "FIX",
-  "FURB",
-  "G",
-  "I",
-  "ICN",
-  "INT",
-  "INP",
-  "ISC",
-  "LOG",
-  "PIE",
-  "PT",
-  "PTH",
-  "PYI",
-  "Q",
-  "S",
-  "N",
-  "PERF",
-  "PL",
-  "RET",
-  "RSE",
-  "RUF",
-  "SIM",
-  "SLOT",
-  "T20",
-  "TC",
-  "TRY",
-  "UP",
-  "W",
-]
-ignore = ["ANN401", "S101", "TRY003", "S603", "S607"]
+select = ["ALL"]
+
+ignore = [
+  "ANN401", # any-type
+  "BLE",    # blind-except
+  "COM812", # missing-trailing-comma -- may cause conflicts when used with the formatter
+  "FBT001", # boolean-type-hint-positional-argument
+  "FBT002", # boolean-default-value-positional-argument
+  "S101",   # assert-used -- we use this in tests
+  ]
 fixable = ["ALL"]
 unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
@@ -186,11 +140,11 @@ jobs = 4
 
 [tool.pylint.messages_control]
 disable = [
-  "R0801", # Similar lines
-  "R0903", # Too few public methods
-  "R0913", # Too many arguments
-  "R0914", # Too many local variables
-  "R0917", # Too many positional arguments
+  "R0801",     # Similar lines
+  "R0903",     # Too few public methods
+  "R0913",     # Too many arguments
+  "R0914",     # Too many local variables
+  "R0917",     # Too many positional arguments
   "no-member", # Member not found
 ]
 
