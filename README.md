@@ -72,10 +72,10 @@ want to [use a model file saved somewhere else](https://morphace.daspyro.de/faq/
 
 ## Quick Start
 
-1. Install the package from this checkout.
+1. Install the Morphace package with pip:
 
     ```bash
-    python -m pip install .
+    pip install morphace
     ```
 
 2. Download the required face landmark model.
@@ -319,4 +319,4 @@ Morphace documentation site.
 ## License
 
 The code in this project is licensed under the MIT license. See
-[LICENSE.txt](LICENSE.txt) for details.
+[LICENSE.txt](https://github.com/pierow2k/morphace/blob/main/LICENSE.txt) for details.
