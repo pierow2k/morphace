@@ -1,0 +1,4 @@
+node_modules/
+dist/
+.astro/
+.website_notes.md

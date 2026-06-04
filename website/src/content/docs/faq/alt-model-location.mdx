@@ -1,0 +1,83 @@
+---
+title: Using an Alternative Model Path
+description: Using a landmark model stored outside the default app data directory.
+sidebar:
+  order: 7.2
+---
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" icon="starlight">
+
+Morphace expects the landmark model file to exist in its
+[app data directory](/faq/#where-is-the-model-file-stored).
+The easiest way to set this up is with:
+
+```bash
+morphace download
+```
+
+The [`download` command](/cli-reference/download/) downloads the required
+model and saves it in the default location for your operating system.
+
+You only need this guide if you want to store the landmark model somewhere
+else.
+
+</Aside>
+
+## Model Lookup Order
+
+When `--landmark-model` is omitted, Morphace looks for the model in this
+order:
+
+1. The path set in `MORPHACE_LANDMARK_MODEL`.
+2. The [application data directory](/faq/#where-is-the-model-file-stored).
+
+## Use a Model Path for One Command
+
+To use a model file in a custom location, pass its path with
+`--landmark-model`:
+
+```bash
+morphace morph \
+  first_image.png \
+  second_image.png \
+  --landmark-model ./model/shape_predictor_68_face_landmarks_GTX.dat
+```
+
+The `--landmark-model` option only affects the command where you use it.
+
+The same option can be used with any command that require the landmark
+model.
+
+## Set a Model Path for Repeated Use
+
+The `MORPHACE_LANDMARK_MODEL` environment variable applies to future
+commands in the same shell environment.
+
+```bash
+export MORPHACE_LANDMARK_MODEL="$PWD/model/shape_predictor_68_face_landmarks_GTX.dat"
+```
+
+After setting this variable, you can run Morphace without passing
+`--landmark-model` each time:
+
+```bash
+morphace morph \
+  first_image.png \
+  second_image.png
+```
+
+## Default Model Directory
+
+If you download the model file manually, extract it and place
+`shape_predictor_68_face_landmarks_GTX.dat` in
+[the appropriate directory for your operating system](/faq/#where-is-the-model-file-stored).
+
+## Why Use an Alternative Model Path?
+
+Use an alternative model path if you want to:
+
+* Keep the model file inside a project directory.
+* Share one model file across multiple environments.
+* Store large model files on a specific drive or mounted volume.
+* Manage the model file yourself instead of using `morphace download`.

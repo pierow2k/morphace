@@ -1,0 +1,33 @@
+---
+title: Quick Start
+description: Generate your first Morphace MP4 from two face images.
+sidebar:
+  order: 2
+---
+import { Steps } from '@astrojs/starlight/components';
+
+<Steps>
+
+1. Install Morphace from this checkout:
+
+   ```bash
+   python -m pip install .
+   ```
+
+2. Download the landmark model file:
+
+   ```bash
+   morphace download
+   ```
+
+3. Generate a morph video:
+
+   ```bash
+   morphace morph \
+     first_image.png \
+     second_image.png
+   ```
+
+4. Open the newly created video `morph.mp4`.
+
+</Steps>

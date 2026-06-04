@@ -1,0 +1,46 @@
+---
+title: Images With Similar Composition
+description: Examples using images with similar compositions.
+sidebar:
+  order: 6.1
+---
+
+## Images With Similar Composition
+
+<div class="not-content grid gap-4 sm:grid-cols-2">
+  <figure class="rounded-lg border border-sky-100 bg-white p-3 shadow-sm">
+    <img
+      src="/media/example-young.jpg"
+      alt="First source portrait used in the Morphace demo"
+      class="aspect-[3/4] w-full rounded-md object-cover"
+    />
+    <figcaption class="mt-3 text-sm text-slate-600">First source image</figcaption>
+  </figure>
+  <figure class="rounded-lg border border-sky-100 bg-white p-3 shadow-sm">
+    <img
+      src="/media/example-old.jpg"
+      alt="Second source portrait used in the Morphace demo"
+      class="aspect-[3/4] w-full rounded-md object-cover"
+    />
+    <figcaption class="mt-3 text-sm text-slate-600">Second source image</figcaption>
+  </figure>
+</div>
+
+## Morph Video With Similar Image Composition
+
+<figure class="not-content mt-6 overflow-hidden rounded-lg border border-sky-100 bg-white shadow-sm">
+  <video
+    class="mx-auto aspect-[3/4] max-h-[720px] w-full max-w-xl bg-sky-950 object-cover"
+    controls
+    preload="metadata"
+    poster="/media/video-similar-composition-poster.jpg"
+    aria-label="Morphace video showing similar image compositions"
+  >
+    <source src="/media/video-similar-composition.webm" type="video/webm" />
+    <source src="/media/video-similar-composition.mp4" type="video/mp4" />
+  </video>
+  <figcaption class="px-4 py-3 text-sm text-slate-600">
+    Two morph effect videos generated with Morphace using a 5
+    second duration and concatenated to produce a loop.
+  </figcaption>
+</figure>

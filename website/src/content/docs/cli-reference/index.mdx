@@ -1,0 +1,32 @@
+---
+title: CLI Reference
+description: Command reference for the morphace CLI.
+sidebar:
+  order: 4
+---
+
+The `morphace` command provides three subcommands:
+
+| Command                                         | Purpose                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| [`morphace download`](/cli-reference/download/) | Downloads Morphace's required model file.                    |
+| [`morphace prep`](/cli-reference/prep/)         | Prepares aligned square PNG face crops from raw images.      |
+| [`morphace morph`](/cli-reference/morph/)       | Generates an MP4 face-morphing video from two source images. |
+
+## Usage
+
+```text
+usage: morphace [-h] [-V] <command> ...
+
+Create face morph videos and prepare source images.
+
+positional arguments:
+  <command>
+    morph        Generate a face morphing video.
+    prep         Prepare aligned square PNG face crops.
+    download     Download the dlib landmark model.
+
+options:
+  -h, --help     show this help message and exit
+  -V, --version  show program's version number and exit
+```

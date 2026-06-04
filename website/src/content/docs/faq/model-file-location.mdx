@@ -1,0 +1,47 @@
+---
+title: Model File Location
+description: Model File Location
+sidebar:
+  order: 7.1
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { FileTree } from '@astrojs/starlight/components';
+
+The [morphace download](/cli-reference/download/) command will
+automatically save the required dlib model file to the appropriate
+directory. The exact location depends on your operating system.
+
+<Tabs>
+  <TabItem label="Linux" icon="linux">
+  `~/.local/share/morphace`
+    <FileTree>
+      - ~
+        - .local
+          - share
+            - morphace
+              - **shape_predictor_68_face_landmarks_GTX.dat**
+    </FileTree>
+  </TabItem>
+  <TabItem label="macOS" icon="apple">
+  `~/Library/Application Support/morphace`
+    <FileTree>
+      - ~
+        - Library
+          - `Application Support`
+            - morphace
+              - **shape_predictor_68_face_landmarks_GTX.dat**
+    </FileTree>
+  </TabItem>
+  <TabItem label="Windows" icon="seti:windows">
+  `C:\Users\<User>\AppData\Local\morphace`
+    <FileTree>
+      - C:
+        - Users
+          - \<User> **Your Windows username**
+            - AppData
+              - Local
+                - morphace
+                  - **shape_predictor_68_face_landmarks_GTX.dat**
+    </FileTree>
+  </TabItem>
+</Tabs>

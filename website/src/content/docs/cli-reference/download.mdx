@@ -1,0 +1,45 @@
+---
+title: download
+description: Download the dlib landmark model used by Morphace.
+sidebar:
+  order: 4.1
+---
+Morphace expects its facial landmark model file
+(`shape_predictor_68_face_landmarks_GTX.dat`) to exist in the
+[default model directory](/faq/#where-is-the-model-file-stored).
+
+The easiest way to set this up is by running the download command:
+
+```bash
+morphace download
+```
+
+## Usage
+
+```text
+usage: morphace download [-s SAVE_TO] [-f] [--debug] [-h]
+
+Download the dlib landmark model file.
+
+download options:
+  -s, --save-to SAVE_TO
+                        Path to save the model file. If omitted, the default
+                        user data directory will be used. (default: None)
+  -f, --force           Overwrite existing model file. (default: False)
+
+diagnostic options:
+  --debug               Enable debug-level logging. (default: False)
+
+general options:
+  -h, --help            show this help message and exit
+```
+
+### Options
+
+If you want to save the model file to a different directory, use the
+`--save-to` option. You can find out more about
+[using an alternative model path](/faq/alt-model-location/) in the FAQ.
+
+```bash
+morphace download --save-to /path/to/save/model/
+```

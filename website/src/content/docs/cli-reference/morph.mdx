@@ -1,0 +1,82 @@
+---
+title: morph
+description: Generate an MP4 face-morphing video from two source images.
+sidebar:
+  order: 4.3
+---
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" icon="starlight">
+
+Use `morphace morph` to generate a face-morphing video from two source
+images. Examples are available in the [gallery](/gallery).
+
+
+</Aside>
+
+## Usage
+
+```text
+usage: morphace morph [-o OUTPUT] [-f] [-d DURATION] [-r FPS] [-m]
+                      [-l LANDMARK_MODEL] [-v] [--debug] [-h] [-V]
+                      img1 img2
+
+Generate a face morphing video.
+
+positional arguments:
+  img1                  Path to the first face image
+  img2                  Path to the second face image
+
+output options:
+  -o, --output OUTPUT   Path for the output MP4 video (default: morph.mp4)
+  -f, --force           Overwrite existing MP4 video (default: False)
+
+morph options:
+  -d, --duration DURATION
+                        Duration of the morph video in seconds (default: 5)
+  -r, --fps FPS         Frames per second for the output video (default: 30)
+  -m, --show-mesh       Draw triangle mesh overlay to visualize face geometry
+                        warping (default: False)
+
+model options:
+  -l, --landmark-model LANDMARK_MODEL
+                        Path to shape_predictor_68_face_landmarks_GTX.dat
+                        model file. If omitted, morphace checks
+                        MORPHACE_LANDMARK_MODEL and then the default user data
+                        directory. (default: None)
+
+diagnostic options:
+  -v, --show-ffmpeg-output
+                        Show FFmpeg informational output while encoding.
+                        (default: only show FFmpeg errors)
+  --debug               Enable debug-level logging (default: False)
+
+general options:
+  -h, --help            show this help message and exit
+  -V, --version         show program's version number and exit
+```
+
+### Options
+
+- The frame count is based on the selected duration and frame rate. With
+the defaults, `--duration 5` and `--fps 30`, Morphace generates 150
+frames. The first frame matches the first image, the last frame matches
+the second image, and the frames between them move through evenly spaced
+steps.
+
+- By default, Morphace only shows FFmpeg errors. Use `--show-ffmpeg-output`
+when you want FFmpeg's informational encoder output as well.
+
+- Use `--show-mesh` to draw the triangle mesh overlay on the generated video.
+This is useful when you want to see how the face geometry is being warped
+during the morph. You can
+[see an example in the gallery](/gallery/show-mesh).
+
+## Usage Example
+
+In this example a morph video file `morph.mp4` is created in the current
+directory:
+
+```bash
+morphace morph first_image.png second_image.png
+```

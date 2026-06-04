@@ -1,0 +1,134 @@
+---
+title: prep
+description: Prepare aligned square PNG face crops from raw images.
+sidebar:
+  order: 4.2
+---
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note" icon="starlight">
+
+**Using the `morphace prep` command is optional.** It provides an easy way
+to create a morph transition that focuses on faces.
+
+</Aside>
+
+## Preparing Face Crops
+
+Morphace handles size mismatches, but it cannot make every composition line
+up. A close-up portrait and a full-body distance shot can both contain
+detectable faces, but the morph will spend too much motion on background and
+body area. *(Refer to the [gallery](/gallery) for examples)*
+
+Run those images through `morphace-prep` when you want the transition to focus
+on faces. The prep command detects every face in each source image, calculates
+an alignment quadrilateral from the 68 landmarks, prepares the source canvas,
+and warps each face into a square PNG.
+
+## Prep Image Example
+
+The example below shows an image before and after being processed.
+
+<div class="not-content grid gap-4 sm:grid-cols-2">
+  <figure class="rounded-lg border border-sky-100 bg-white p-3 shadow-sm">
+    <img
+      src="/media/example-young.jpg"
+      alt="First source portrait used in the Morphace demo"
+      class="aspect-[3/4] w-full rounded-md object-cover"
+    />
+    <figcaption class="mt-3 text-sm text-slate-600">Source image</figcaption>
+  </figure>
+  <figure class="rounded-lg border border-sky-100 bg-white p-3 shadow-sm">
+    <img
+      src="/media/example-young_face01.jpg"
+      alt="Prepared square face crop from the Morphace demo source image"
+      class="aspect-[3/4] w-full rounded-md object-cover"
+    />
+    <figcaption class="mt-3 text-sm text-slate-600">Prepared image</figcaption>
+  </figure>
+</div>
+
+## Usage
+
+```text
+usage: morphace prep [-f] [-s OUTPUT_SIZE] [-x X_SCALE] [-y Y_SCALE]
+                     [-e EM_SCALE] [-a] [-l LANDMARK_MODEL] [--debug] [-h]
+                     [-V]
+                     source [aligned_dir]
+
+Detect faces in raw images and prepare aligned square PNG crops for morphing.
+
+positional arguments:
+  source                Path to a directory of images or a single image file
+  aligned_dir           Directory for aligned images (default:
+                        <source>/cropped for directories, same directory as
+                        source for files)
+
+output options:
+  -f, --force           Overwrite existing aligned images (default: False)
+
+alignment options:
+  -s, --output-size OUTPUT_SIZE
+                        Pixel dimension of the output square crop (default:
+                        1024)
+  -x, --x-scale X_SCALE
+                        Horizontal crop extent around face; >1.0 includes more
+                        context, <1.0 crops tighter (default: 1.0)
+  -y, --y-scale Y_SCALE
+                        Vertical crop extent around face; >1.0 includes more
+                        context, <1.0 crops tighter (default: 1.0)
+  -e, --em-scale EM_SCALE
+                        Shift crop center from eyes toward mouth (default:
+                        0.1)
+  -a, --alpha           Use alpha channel for padded regions instead of
+                        reflected padding (default: False)
+
+model options:
+  -l, --landmark-model LANDMARK_MODEL
+                        Path to shape_predictor_68_face_landmarks_GTX.dat
+                        model file. If omitted, morphace checks
+                        MORPHACE_LANDMARK_MODEL and then the default user data
+                        directory. (default: None)
+
+diagnostic options:
+  --debug               Enable debug-level logging (default: False)
+
+general options:
+  -h, --help            show this help message and exit
+  -V, --version         show program's version number and exit
+```
+
+## Example Usage
+
+Prepare a directory of raw images:
+
+```bash
+morphace prep /path/to/images/ /path/to/save/images
+```
+
+Prepare a single image and save the prepared image to the same directory:
+
+```bash
+morphace prep /path/to/image.jpg
+```
+
+<Aside type="note" icon="starlight">
+
+- By default, each aligned crop is 1024x1024. Output files are named with the
+source stem and face number, such as `portrait_face01.png` and
+`portrait_face02.png`.
+
+- `morphace prep` accepts either a directory or a single image file. When the
+source is a directory, only immediate child files with these extensions are
+processed: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.tiff`, and `.webp`.
+
+- If `aligned_dir` is omitted:
+  - A directory source writes to `<source>/cropped`
+  - A file source writes beside the input file
+
+- The output directory is created automatically.
+
+</Aside>
+
+
+

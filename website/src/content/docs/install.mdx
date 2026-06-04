@@ -1,0 +1,71 @@
+---
+title: Install
+description: Install Morphace and create your first face morph.
+sidebar:
+  order: 3
+---
+
+Morphace is a Python package that provides the `morphace` command-line tool
+for preparing images and creating face-morphing videos.
+
+The `morphace` command provides three subcommands:
+
+| Command                                         | Purpose                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| [`morphace download`](/cli-reference/download/) | Downloads Morphace's required model file.                    |
+| [`morphace prep`](/cli-reference/prep/)         | Prepares aligned square PNG face crops from raw images.      |
+| [`morphace morph`](/cli-reference/morph/)       | Generates an MP4 face-morphing video from two source images. |
+
+
+## Requirements
+
+To install and run Morphace, your system needs:
+
+* Python 3.13 or newer.
+* FFmpeg installed and available on `PATH`.
+
+The required Python dependencies are declared by the package and are
+installed automatically.
+
+Morphace also requires the dlib `shape_predictor_68_face_landmarks_GTX.dat`
+landmark model when running the `morph` and `prep` commands. You do not
+need to download this model before installing Morphace. The recommended
+setup is to install Morphace first, then run
+[`morphace download`](/cli-reference/download/).
+
+## Install Morphace
+
+From the repository checkout, install the package with pip:
+
+```bash
+python -m pip install .
+```
+
+## Download the Landmark Model
+
+After installing Morphace, download the required landmark model
+using the [`morphace download`](/cli-reference/download/) command:
+
+```bash
+morphace download
+```
+
+This saves the model to Morphace’s
+[Default Model Directory](/faq/model-file-location).
+
+For most users, this is all the model setup you need.
+
+## Create Your First Morph
+
+After installing Morphace and downloading the landmark model,
+use the [`morphace morph`](/cli-reference/morph/) command to create a face
+morph:
+
+```bash
+morphace morph \
+  first_image.png \
+  second_image.png
+```
+
+Morphace creates a new video file in the current directory called
+`morph.mp4`.

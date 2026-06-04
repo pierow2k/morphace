@@ -1,0 +1,33 @@
+---
+title: Gallery
+description: Example Morphace inputs and generated output.
+sidebar:
+  order: 6
+---
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Morphace handles size mismatches, but it cannot make every composition line
+up. For example, a close-up portrait and a full-body shot may both include
+detectable faces, but the resulting video will include more movement from
+the background and body areas.
+
+To create a video that focuses more closely on facial features, use the
+[prep](/cli-reference/prep) command. It automatically aligns and crops
+images before morphing.
+
+The gallery below shows examples of these different morphing results.
+
+<CardGrid>
+  <Card title="Images With Similar Composition">
+    [Images With Similar Composition](similar-composition)
+    shows examples using images with similar compositions.
+  </Card>
+  <Card title="Images With Different Composition">
+    [Images With Different Composition](different-composition)
+    shows examples using images with different compositions.
+  </Card>
+  <Card title="Show Mesh">
+    [Show Mesh](show-mesh)
+    shows an example of output using the `--show-mesh` flag.
+  </Card>
+</CardGrid>
