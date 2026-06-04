@@ -42,7 +42,7 @@ and exports the result as an MP4 video.
 
 Morphace requires:
 
-- Python 3.13 or newer.
+- Python 3.12 or newer.
 - FFmpeg installed and available on your system `PATH`.
 
 The required Python packages are installed automatically when you install
