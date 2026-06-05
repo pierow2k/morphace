@@ -53,9 +53,14 @@ include = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = [
+  "-m",
+  "not e2e",
   "--cov=morphace",
   "--cov-branch",
   "--cov-report=html",
+]
+markers = [
+  "e2e: slow end-to-end tests that may download external assets",
 ]
 
 [tool.coverage.run]
