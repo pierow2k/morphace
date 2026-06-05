@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
-    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
-    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check"
+    "preview": "npm run build && wrangler dev",
+    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
+    "cf-typegen": "wrangler types",
+    "deploy": "npm run build && wrangler deploy",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/cloudflare": "^13.6.1",
     "@astrojs/starlight": "0.38.5",
     "@astrojs/starlight-tailwind": "5.0.0",
     "@tailwindcss/vite": "4.3.0",
@@ -19,8 +22,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.9",
-    "typescript": "5.9.3"
+    "wrangler": "^4.98.0"
   },
   "overrides": {
     "yaml": "2.8.3"
