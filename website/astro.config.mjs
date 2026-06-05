@@ -231,6 +231,7 @@ function readDocsDirectory(directory, routeParts = []) {
 }
 
 export default defineConfig({
+  site: 'https://morphace.daspyro.de/', // Required for sitemap generation
   integrations: [
     starlight({
       title: "Morphace",
