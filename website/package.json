@@ -17,7 +17,7 @@
     "@astrojs/starlight": "0.38.5",
     "@astrojs/starlight-tailwind": "5.0.0",
     "@tailwindcss/vite": "4.3.0",
-    "astro": "6.4.4",
+    "astro": "6.4.8",
     "tailwindcss": "4.3.0",
     "typescript": "^5.9.3"
   },
