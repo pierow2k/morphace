@@ -22,7 +22,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "wrangler": "^4.98.0"
+    "wrangler": "^4.103.0"
   },
   "overrides": {
     "yaml": "2.8.3"
