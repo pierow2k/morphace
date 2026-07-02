@@ -18,13 +18,13 @@ classifiers = [
 
 dependencies = [
   "dlib==20.0.1",
-  "numpy==2.4.6",
-  "opencv-python==4.13.0.92",
-  "pillow==12.2.0",
+  "numpy==2.5.0",
+  "opencv-python==5.0.0.93",
+  "pillow==12.3.0",
   "platformdirs==4.10.0",
   "requests==2.34.2",
-  "scipy==1.17.1",
-  "tqdm==4.67.3"
+  "scipy==1.18.0",
+  "tqdm==4.68.3"
 ]
 
 [project.scripts]
