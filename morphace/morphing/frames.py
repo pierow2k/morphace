@@ -197,7 +197,7 @@ def _morph_triangle(
     _blend_triangle_patch(img, rect_dest, mask, img_rect)
 
 
-def _generate_morph_frame(  # noqa: PLR0913
+def _generate_morph_frame(  # noqa: PLR0913,PLR0917
     img1: ImageArray,
     img2: ImageArray,
     p1_arr: np.ndarray,

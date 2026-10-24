@@ -94,7 +94,7 @@ def test_generate_morph_sequence_writes_interpolated_frames(
         captured["config"] = config
         yield output, 3
 
-    def fake_generate_morph_frame(  # noqa:PLR0913
+    def fake_generate_morph_frame(  # noqa:PLR0913,PLR0917
         img1: np.ndarray,
         img2: np.ndarray,
         p1_arr: np.ndarray,
@@ -167,7 +167,7 @@ def test_generate_morph_sequence_logs_progress(
         assert config == video_config
         yield output, 3
 
-    def fake_generate_morph_frame(  # noqa:PLR0913
+    def fake_generate_morph_frame(  # noqa:PLR0913,PLR0917
         img1: np.ndarray,
         img2: np.ndarray,
         p1_arr: np.ndarray,
