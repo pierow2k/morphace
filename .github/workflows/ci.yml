@@ -13,6 +13,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  website:
+    name: Website / Node 24
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: website
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: website/package-lock.json
+
+      - name: Set up npm
+        run: npm install --global npm@11.19.1
+
+      - name: Install website dependencies
+        run: npm ci
+
+      - name: Audit website dependencies
+        run: npm audit --include=dev --audit-level=low
+
+      - name: Check website
+        run: npm run check
+
+      - name: Build website
+        run: npm run build
+
   check:
     name: Checks / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
