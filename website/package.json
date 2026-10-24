@@ -12,13 +12,13 @@
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
+    "@astrojs/check": "^0.9.12",
     "@astrojs/cloudflare": "^14.4.2",
-    "@astrojs/starlight": "0.41.3",
+    "@astrojs/starlight": "0.42.6",
     "@astrojs/starlight-tailwind": "5.0.0",
-    "@tailwindcss/vite": "4.3.0",
+    "@tailwindcss/vite": "4.3.3",
     "astro": "7.4.2",
-    "tailwindcss": "4.3.0",
+    "tailwindcss": "4.3.3",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
