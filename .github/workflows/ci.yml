@@ -99,6 +99,15 @@ jobs:
             http://127.0.0.1:4328/documentation/ >"$smoke_dir/docs.html"
           grep -Fq '<title>Morphace Documentation | Morphace</title>' \
             "$smoke_dir/docs.html"
+          curl --fail --silent --show-error --max-time 10 \
+            http://127.0.0.1:4328/quick-start/ >"$smoke_dir/quick-start.html"
+          grep -Fq '<title>Quick Start | Morphace</title>' \
+            "$smoke_dir/quick-start.html"
+          curl --fail --silent --show-error --max-time 10 \
+            http://127.0.0.1:4328/faq/model-file-location/ \
+            >"$smoke_dir/model-file-location.html"
+          grep -Fq '<title>Model File Location | Morphace</title>' \
+            "$smoke_dir/model-file-location.html"
           kill -0 "$dev_pid"
 
       - name: Check website

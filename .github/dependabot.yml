@@ -15,9 +15,27 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      patch-and-minor:
+      astro-stack:
         patterns:
-          - "*"
+          - "astro"
+          - "@astrojs/cloudflare"
+          - "@astrojs/starlight"
+          - "@astrojs/starlight-tailwind"
+          - "wrangler"
+        update-types:
+          - "patch"
+          - "minor"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+        update-types:
+          - "patch"
+          - "minor"
+      tooling:
+        patterns:
+          - "@astrojs/check"
+          - "typescript"
         update-types:
           - "patch"
           - "minor"
