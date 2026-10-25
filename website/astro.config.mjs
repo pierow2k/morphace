@@ -254,5 +254,6 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
-  adapter: cloudflare()
+  // Starlight's static documentation components use native Node.js bindings.
+  adapter: cloudflare({ prerenderEnvironment: "node" })
 });
