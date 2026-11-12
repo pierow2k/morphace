@@ -13,11 +13,11 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.12",
-    "@astrojs/cloudflare": "^14.4.4",
-    "@astrojs/starlight": "0.42.8",
+    "@astrojs/cloudflare": "^14.4.6",
+    "@astrojs/starlight": "0.42.10",
     "@astrojs/starlight-tailwind": "5.0.0",
     "@tailwindcss/vite": "4.3.5",
-    "astro": "7.4.5",
+    "astro": "7.4.8",
     "tailwindcss": "4.3.5",
     "typescript": "^5.9.3"
   },
