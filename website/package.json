@@ -13,16 +13,16 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.12",
-    "@astrojs/cloudflare": "^14.4.6",
-    "@astrojs/starlight": "0.42.10",
+    "@astrojs/cloudflare": "^14.4.8",
+    "@astrojs/starlight": "0.43.1",
     "@astrojs/starlight-tailwind": "5.0.0",
     "@tailwindcss/vite": "4.3.5",
-    "astro": "7.4.8",
+    "astro": "7.4.12",
     "tailwindcss": "4.3.5",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "wrangler": "^4.156.2"
+    "wrangler": "^4.163.0"
   },
   "overrides": {
     "yaml": "2.8.3",
